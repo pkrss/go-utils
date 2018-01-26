@@ -94,32 +94,47 @@ func GetStructFieldSimple(v interface{}, field string) interface{} {
 	return nil
 }
 
-func CopyStruct(target interface{}, src interface{}) {
-	if target == nil || src == nil {
-		return
+func GetStructFieldName2ValueMap(v interface{}, cols ...string) (ret map[string]interface{}) {
+
+	if v == nil {
+		return nil
 	}
 
-	targetV := reflect.ValueOf(target)
-	srcV := reflect.ValueOf(src)
+	val := reflect.ValueOf(v)
 
-	switch targetV.Kind() {
+	switch val.Kind() {
 	case reflect.Ptr:
-		targetV = targetV.Elem()
-	}
-	switch srcV.Kind() {
-	case reflect.Ptr:
-		srcV = srcV.Elem()
+		val = val.Elem()
 	}
 
-	c := srcV.NumField()
+	ret = make(map[string]interface{})
+
+	c := val.NumField()
+	c2 := len(cols)
 	for i := 0; i < c; i++ {
-		srcValueField := srcV.Field(i)
-		srcTypeField := srcV.Type().Field(i)
+		valueField := val.Field(i)
+		typeField := val.Type().Field(i)
 
-		targetValueField := targetV.FieldByName(srcTypeField.Name)
-		if !targetValueField.IsValid() {
+		s := typeField.Name
+		f := false
+
+		if c2 != 0 {
+			for j := 0; j < c2; j++ {
+				if cols[j] == s {
+					f = true
+					break
+				}
+			}
+		}
+
+		if f {
 			continue
 		}
-		targetValueField.Set(srcValueField)
+
+		ret[s] = valueField.Interface()
+
+		// tag := typeField.Tag
+		// fmt.Printf("Field Name: %s,\t Field Value: %v,\t Tag Value: %s\n", typeField.Name, valueField.Interface(), tag.Get("tag_name"))
 	}
+	return
 }
