@@ -1,21 +1,20 @@
 package pqsql
 
 import (
-	"database/sql"
 	"os"
 	"regexp"
 
-	_ "github.com/lib/pq"
+	"github.com/go-pg/pg"
 )
 
-var Db *sql.DB
+var Db *pg.DB
 
-func init() {
+// func init() {
 
-	initSql()
-}
+// 	initSql()
+// }
 
-func initSql() {
+func CreatePgSql() *pg.DB {
 	dbuser := os.Getenv("MY_DB_PGSQL_USER")
 	dbpsw := os.Getenv("MY_DB_PGSQL_PASSWORD")
 
@@ -31,11 +30,22 @@ func initSql() {
 
 	// dbName = "go"
 
-	var conninfo string = "user=" + dbuser + " password=" + dbpsw + " dbname=" + dbName + " host=" + dbHost + " port=" + dbPort + " sslmode=disable"
-	db, err := sql.Open("postgres", conninfo)
-	if err != nil {
-		panic(err)
-	}
+	db := pg.Connect(&pg.Options{
+		User:     dbuser,
+		Password: dbpsw,
+		Database: dbName,
+		Addr:     dbHost + ":" + dbPort,
+	})
 
 	Db = db
+
+	// var conninfo string = "user=" + dbuser + " password=" + dbpsw + " dbname=" + dbName + " host=" + dbHost + " port=" + dbPort + " sslmode=disable"
+	// db, err := sql.Open("postgres", conninfo)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// Db = db
+
+	return db
 }

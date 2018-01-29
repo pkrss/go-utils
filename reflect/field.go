@@ -94,7 +94,18 @@ func GetStructFieldSimple(v interface{}, field string) interface{} {
 	return nil
 }
 
-func GetStructFieldName2ValueMap(v interface{}, cols ...string) (ret map[string]interface{}) {
+func GetStructFieldNames(v interface{}, structColsParams ...[]string) (ret []string) {
+	n2v := GetStructFieldName2ValueMap(v, structColsParams...)
+	ret = make([]string, 0)
+	if n2v != nil {
+		for k, _ := range n2v {
+			ret = append(ret, k)
+		}
+	}
+	return
+}
+
+func GetStructFieldName2ValueMap(v interface{}, structColsParams ...[]string) (ret map[string]interface{}) {
 
 	if v == nil {
 		return nil
@@ -109,26 +120,53 @@ func GetStructFieldName2ValueMap(v interface{}, cols ...string) (ret map[string]
 
 	ret = make(map[string]interface{})
 
+	var cols []string
+	var excludeCols []string
+
+	if len(structColsParams) > 1 {
+		excludeCols = structColsParams[1]
+	}
+
+	if len(structColsParams) > 0 {
+		cols = structColsParams[0]
+	}
+
 	c := val.NumField()
-	c2 := len(cols)
+	colsCount := len(cols)
+	excludeColsCount := len(excludeCols)
+	var f bool
 	for i := 0; i < c; i++ {
 		valueField := val.Field(i)
 		typeField := val.Type().Field(i)
 
 		s := typeField.Name
-		f := false
 
-		if c2 != 0 {
-			for j := 0; j < c2; j++ {
+		if colsCount > 0 {
+			f = false
+			for j := 0; j < colsCount; j++ {
 				if cols[j] == s {
 					f = true
 					break
 				}
 			}
+			if !f {
+				continue
+			}
 		}
 
-		if f {
-			continue
+		if excludeColsCount > 0 {
+			f = false
+			for j := 0; j < excludeColsCount; j++ {
+				if cols[j] == s {
+					f = true
+					break
+				}
+			}
+
+			if f {
+				continue
+			}
+
 		}
 
 		ret[s] = valueField.Interface()

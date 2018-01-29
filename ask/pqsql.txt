@@ -1,0 +1,12 @@
+error:
+2018/01/29 11:21:06 sql: Scan error on column index 8: unsupported Scan, storing driver.Value type <nil> into type *orm.JsonTime
+
+fixed:
+type YesNoEnum bool
+
+// Value - Implementation of valuer for database/sql
+func (yne YesNoEnum) Value() (driver.Value, error) {
+    // value needs to be a base driver.Value type
+    // such as bool.
+	return bool(yne), nil
+}

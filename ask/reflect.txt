@@ -1,0 +1,42 @@
+ask:How to use reflect.Type.Implements
+
+see: https://stackoverflow.com/questions/18570391/check-if-struct-implements-a-given-interface
+
+ou've unfortunately left out the essential parts (please always post complete programs), so I can only guess that the problem is in a method defined on a pointer receiver, in which case the behavior of your code is expected. Check this example and its output:
+
+package main
+
+import (
+        "fmt"
+        "reflect"
+)
+
+type Model interface {
+        m()
+}
+
+func HasModels(m Model) {
+        s := reflect.ValueOf(m).Elem()
+        t := s.Type()
+        modelType := reflect.TypeOf((*Model)(nil)).Elem()
+
+        for i := 0; i < s.NumField(); i++ {
+                f := t.Field(i)
+                fmt.Printf("%d: %s %s -> %t\n", i, f.Name, f.Type, f.Type.Implements(modelType))
+        }
+}
+
+type Company struct{}
+
+func (Company) m() {}
+
+type Department struct{}
+
+func (*Department) m() {}
+
+type User struct {
+        CompanyA    Company
+        CompanyB    *Company
+        DepartmentA Department
+        DepartmentB *Department
+}

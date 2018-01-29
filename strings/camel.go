@@ -6,19 +6,20 @@ package strings
 func StringFromCamelCase(str string) string {
 	c := len(str)
 	s := ""
+	var b byte
 	for i := 0; i < c; i++ {
-		c := str[i]
-		if c == '_' {
+		b = str[i]
+		if b == '_' {
 			i++
 			if i >= c {
 				continue
 			}
-			c = str[i]
-			if c >= 'a' && c <= 'z' {
-				s += c - 'a' + 'A'
+			b = str[i]
+			if b >= 'a' && b <= 'z' {
+				s += string(b - 'a' + 'A')
 			}
 		} else {
-			s += c
+			s += string(b)
 		}
 	}
 	return s
@@ -30,12 +31,14 @@ func StringFromCamelCase(str string) string {
 func StringToCamelCase(str string) string {
 	c := len(str)
 	s := ""
+	var b byte
 	for i := 0; i < c; i++ {
-		c := str[i]
-		if c >= 'A' && c <= 'Z' {
-			s += "_" + (c - 'A' + 'a')
+		b = str[i]
+		if b >= 'A' && b <= 'Z' {
+			s += "_"
+			s += string((b - 'A' + 'a'))
 		} else {
-			s += c
+			s += string(b)
 		}
 	}
 	return s

@@ -2,12 +2,12 @@ package pqsql
 
 import (
 	"errors"
-	"fmt"
 	"hx98/base/beans"
 	"strconv"
 	"strings"
 
-	"github.com/astaxie/beego/orm"
+	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/orm"
 )
 
 type ValueType int
@@ -20,20 +20,18 @@ const (
 )
 
 type ListRawHelper struct {
+	DbQuery           *orm.Query
 	Pageable          *beans.Pageable
-	TableName         string
-	SelectSql         string
 	Where             string
 	WhereArgs         []interface{}
 	ResultListPointer interface{}
 	TotalResult       int64
 }
 
-func MakeListRawHelper(resultListPointer interface{}, pageable *beans.Pageable, tableName string) *ListRawHelper {
+func MakeListRawHelper(resultListPointer interface{}, pageable *beans.Pageable) *ListRawHelper {
 	ret := ListRawHelper{}
 	ret.ResultListPointer = resultListPointer
 	ret.Pageable = pageable
-	ret.TableName = tableName
 	ret.WhereArgs = make([]interface{}, 0)
 
 	return &ret
@@ -97,7 +95,7 @@ func (this *ListRawHelper) appendNormalWhereConds() {
 		}
 
 		this.Where += "in_name in ?"
-		this.WhereArgs = append(this.WhereArgs, in_values)
+		this.WhereArgs = append(this.WhereArgs, pg.In(in_values))
 	}
 
 	for f := true; f; f = false {
@@ -116,11 +114,11 @@ func (this *ListRawHelper) appendNormalWhereConds() {
 	}
 }
 
-func (this *ListRawHelper) getQueryPageablePostfix() string {
+func (this *ListRawHelper) getQueryPageablePostfix() {
 	pageable := this.Pageable
 
 	if pageable == nil {
-		return ""
+		return
 	}
 
 	if pageable.PageNumber < 1 {
@@ -136,7 +134,7 @@ func (this *ListRawHelper) getQueryPageablePostfix() string {
 		offset = (pageable.PageNumber - 1) * pageable.PageSize
 	}
 
-	cond := ""
+	this.DbQuery = this.DbQuery.Limit(pageable.PageSize).Offset(offset)
 
 	// o := orm.NewOrm()
 	// var total int64
@@ -158,12 +156,8 @@ func (this *ListRawHelper) getQueryPageablePostfix() string {
 			}
 			orderBy += " ASC"
 		}
-		cond += " ORDER BY " + orderBy
+		this.DbQuery = this.DbQuery.OrderExpr(orderBy)
 	}
-
-	cond += fmt.Sprintf(" LIMIT %d OFFSET %d", pageable.PageSize, offset)
-
-	return cond
 }
 
 func (this *ListRawHelper) SetCondArrLike(condKey string, dbKeys ...string) {
@@ -219,6 +213,11 @@ func (this *ListRawHelper) SetCondArrParam(condKey string, trueLikeFalseEqual bo
 }
 
 func (this *ListRawHelper) Query() (int64, error) {
+
+	if this.DbQuery == nil {
+		return 0, errors.New("db is nil")
+	}
+
 	pageable := this.Pageable
 
 	if pageable == nil {
@@ -227,37 +226,61 @@ func (this *ListRawHelper) Query() (int64, error) {
 
 	this.appendNormalWhereConds()
 
-	where := this.Where
-	sql := this.SelectSql
-
-	if sql == "" {
-		if len(pageable.Columns) > 0 {
-			sql = "SELECT " + strings.Join(pageable.Columns, ",") + " FROM " + this.TableName
-		} else {
-			sql = "SELECT * FROM " + this.TableName
-		}
+	if len(pageable.Columns) > 0 {
+		this.DbQuery = this.DbQuery.Column(pageable.Columns...)
 	}
 
-	if where != "" {
-		sql += " WHERE " + where
+	if this.Where != "" {
+		this.DbQuery = this.DbQuery.Where(this.Where, this.WhereArgs...)
 	}
 
-	o := orm.NewOrm()
+	this.getQueryPageablePostfix()
 
-	err := o.Raw("SELECT COUNT(*) FROM "+this.TableName+" "+where, this.WhereArgs).QueryRow(&this.TotalResult)
+	cnt, err := this.DbQuery.SelectAndCount(this.ResultListPointer)
 	if err != nil {
-		return this.TotalResult, err
+		return 0, err
 	}
 
-	sql += " " + this.getQueryPageablePostfix()
-
-	num, err := o.Raw(sql, this.WhereArgs).QueryRows(this.ResultListPointer)
-	if num > 0 {
-
-	}
-	if err != nil {
-		return this.TotalResult, err
-	}
+	this.TotalResult = int64(cnt)
 
 	return this.TotalResult, nil
+
+	// v := reflect.ValueOf(this.ResultListPointer)
+	// switch v.Kind() {
+	// case reflect.Ptr:
+	// 	v = v.Elem()
+	// }
+
+	// for i := 0; rows.Next(); i++ {
+	// 	// json.Unmarshal()
+
+	// 	// Get element of array, growing if necessary.
+	// 	if v.Kind() == reflect.Slice {
+	// 		// Grow slice if necessary
+	// 		if i >= v.Cap() {
+	// 			newcap := v.Cap() + v.Cap()/2
+	// 			if newcap < 4 {
+	// 				newcap = 4
+	// 			}
+	// 			newv := reflect.MakeSlice(v.Type(), v.Len(), newcap)
+	// 			reflect.Copy(newv, v)
+	// 			v.Set(newv)
+	// 		}
+	// 		if i >= v.Len() {
+	// 			v.SetLen(i + 1)
+	// 		}
+	// 	}
+
+	// 	if i < v.Len() {
+	// 		// Decode into element.
+	// 		rows.Scan(v.Index(i))
+	// 		// d.value(v.Index(i))
+	// 	} else {
+	// 		// Ran out of fixed array: skip.
+	// 		// d.value(reflect.Value{})
+	// 	}
+
+	// }
+
+	// return this.TotalResult, nil
 }
