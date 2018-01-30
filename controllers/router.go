@@ -60,3 +60,9 @@ func AddRouter(pattern string, c ControllerInterface, methodStr ...string) {
 		m.Call([]reflect.Value{})
 	})
 }
+
+func SetStaticPath(urlPattern string, fileLocalDir string) {
+	fsh := http.FileServer(http.Dir(fileLocalDir))
+	fsh = http.StripPrefix(urlPattern, fsh)
+	http.Handle(urlPattern, fsh)
+}

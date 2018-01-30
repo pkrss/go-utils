@@ -2,7 +2,7 @@ package container
 
 import (
 	"container/list"
-	"hx98/base/beans"
+	// "github.com/pkrss/go-utils/beans"
 )
 
 func ListSub(data *list.List, offset int, limit int) *list.List {
@@ -81,15 +81,15 @@ func ListSub(data *list.List, offset int, limit int) *list.List {
 	return data
 }
 
-func ListSubPage(data *list.List, pageable *beans.Pageable) *list.List {
-	if data != nil && pageable != nil {
-		limit := pageable.PageSize
-		offset := (pageable.PageNumber - 1) * limit
+// func ListSubPage(data *list.List, pageable *beans.Pageable) *list.List {
+// 	if data != nil && pageable != nil {
+// 		limit := pageable.PageSize
+// 		offset := (pageable.PageNumber - 1) * limit
 
-		data = ListSub(data, offset, limit)
-	}
-	return data
-}
+// 		data = ListSub(data, offset, limit)
+// 	}
+// 	return data
+// }
 
 func List2Array(data *list.List) (ret []interface{}) {
 	if data == nil {

@@ -1,0 +1,12 @@
+{
+    "appname":"sys",
+    "httpport":8090,
+    "runmode":"dev",
+
+
+    "sys":{
+        "smscode":{
+            "hack":"a"
+        }
+    }
+}
