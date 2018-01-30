@@ -106,6 +106,22 @@ func GetStructFieldNames(v interface{}, structColsParams ...[]string) (ret []str
 }
 
 func GetStructFieldName2ValueMap(v interface{}, structColsParams ...[]string) (ret map[string]interface{}) {
+	m := GetStructFieldMap(v, structColsParams...)
+	if m == nil {
+		return nil
+	}
+	ret = make(map[string]interface{}, 0)
+	for k, v := range m {
+		ret[k] = v.Interface()
+	}
+	return ret
+}
+
+func GetStructFieldMap(v interface{}, structColsParams ...[]string) (ret map[string]reflect.Value) {
+	return GetStructFieldMap2(v, nil, structColsParams...)
+}
+
+func GetStructFieldMap2(v interface{}, ret map[string]reflect.Value, structColsParams ...[]string) map[string]reflect.Value {
 
 	if v == nil {
 		return nil
@@ -118,7 +134,7 @@ func GetStructFieldName2ValueMap(v interface{}, structColsParams ...[]string) (r
 		val = val.Elem()
 	}
 
-	ret = make(map[string]interface{})
+	ret = make(map[string]reflect.Value)
 
 	var cols []string
 	var excludeCols []string
@@ -169,10 +185,59 @@ func GetStructFieldName2ValueMap(v interface{}, structColsParams ...[]string) (r
 
 		}
 
-		ret[s] = valueField.Interface()
+		if typeField.Anonymous {
+			GetStructFieldMap2(valueField.Interface(), ret, structColsParams...)
+			continue
+		}
+
+		ret[s] = valueField // .Interface()
 
 		// tag := typeField.Tag
 		// fmt.Printf("Field Name: %s,\t Field Value: %v,\t Tag Value: %s\n", typeField.Name, valueField.Interface(), tag.Get("tag_name"))
 	}
-	return
+	return ret
+}
+
+type FieldInfo struct {
+	Tag reflect.StructTag
+	Val reflect.Value
+}
+
+func GetStructFieldInfoMap(v interface{}) (ret map[string]FieldInfo) {
+	return GetStructFieldInfoMap2(v, nil)
+}
+
+func GetStructFieldInfoMap2(v interface{}, ret map[string]FieldInfo) map[string]FieldInfo {
+
+	if v == nil {
+		return nil
+	}
+
+	val := reflect.ValueOf(v)
+
+	switch val.Kind() {
+	case reflect.Ptr:
+		val = val.Elem()
+	}
+
+	ret = make(map[string]FieldInfo)
+
+	c := val.NumField()
+	for i := 0; i < c; i++ {
+		valueField := val.Field(i)
+		typeField := val.Type().Field(i)
+
+		s := typeField.Name
+
+		if typeField.Anonymous {
+			GetStructFieldInfoMap2(valueField.Interface(), ret)
+			continue
+		}
+
+		f := FieldInfo{}
+		f.Tag = typeField.Tag
+		f.Val = valueField
+		ret[s] = f
+	}
+	return ret
 }
