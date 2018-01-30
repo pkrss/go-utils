@@ -2,8 +2,9 @@ package pqsql
 
 import (
 	"errors"
-	"hx98/base/beans"
 	"reflect"
+
+	"github.com/pkrss/go-utils/beans"
 
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
@@ -18,7 +19,7 @@ type BaseDaoInterface interface {
 	UpdateByFilter(ob BaseModelInterface, col string, val interface{}, structColsParams ...[]string) error
 	UpdateById(ob BaseModelInterface, id interface{}, structColsParams ...[]string) error
 	Insert(ob BaseModelInterface, structColsParams ...[]string) error
-	SelectListByRawHelper(listRawHelper ListRawHelper, cb ...SelectListCallback) (int64, error)
+	SelectListByRawHelper(listRawHelper *ListRawHelper, cb ...SelectListCallback) (int64, error)
 	SelectList(resultListPointer interface{}, pageable *beans.Pageable, cb ...SelectListCallback) (int64, error)
 }
 
@@ -128,11 +129,11 @@ func (this *BaseDao) Insert(ob BaseModelInterface, structColsParams ...[]string)
 	return err
 }
 
-type SelectListCallback func(listRawHelper ListRawHelper)
+type SelectListCallback func(listRawHelper *ListRawHelper)
 
-func (this *BaseDao) SelectListByRawHelper(listRawHelper ListRawHelper, cb ...SelectListCallback) (int64, error) {
+func (this *BaseDao) SelectListByRawHelper(listRawHelper *ListRawHelper, cb ...SelectListCallback) (int64, error) {
 
-	if listRawHelper.Query == nil {
+	if listRawHelper.DbQuery == nil {
 
 		db, err := this.GetDb()
 		if err != nil {
@@ -167,5 +168,5 @@ func (this *BaseDao) SelectList(resultListPointer interface{}, pageable *beans.P
 
 	listRawHelper := MakeListRawHelper(resultListPointer, pageable)
 
-	return this.SelectListByRawHelper(*listRawHelper, cb...)
+	return this.SelectListByRawHelper(listRawHelper, cb...)
 }

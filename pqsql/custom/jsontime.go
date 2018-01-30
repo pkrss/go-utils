@@ -1,7 +1,6 @@
 package orm
 
 import (
-	"database/sql/driver"
 	"time"
 )
 
@@ -11,10 +10,10 @@ type JsonTime time.Time
 
 var nilTime = time.Time{} // ).UnixNano()
 
-// Value - Implementation of valuer for database/sql
-func (this *JsonTime) Value() (driver.Value, error) {
-	return time.Time(*this), nil
-}
+// // Value - Implementation of valuer for database/sql
+// func (this *JsonTime) Value() (driver.Value, error) {
+// 	return time.Time(*this), nil
+// }
 
 func (this *JsonTime) Scan(src interface{}) error {
 	if src == nil {

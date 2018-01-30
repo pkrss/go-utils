@@ -2,9 +2,11 @@ package pqsql
 
 import (
 	"errors"
-	"hx98/base/beans"
+	"log"
 	"strconv"
 	"strings"
+
+	"github.com/pkrss/go-utils/beans"
 
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
@@ -94,7 +96,7 @@ func (this *ListRawHelper) appendNormalWhereConds() {
 			break
 		}
 
-		this.Where += "in_name in ?"
+		this.Where += " " + in_name + " in ? "
 		this.WhereArgs = append(this.WhereArgs, pg.In(in_values))
 	}
 
@@ -109,7 +111,7 @@ func (this *ListRawHelper) appendNormalWhereConds() {
 			break
 		}
 
-		this.Where += "like_name like ?"
+		this.Where += " " + like_name + " like ? "
 		this.WhereArgs = append(this.WhereArgs, like_value)
 	}
 }
@@ -119,6 +121,22 @@ func (this *ListRawHelper) getQueryPageablePostfix() {
 
 	if pageable == nil {
 		return
+	}
+
+	if pageable.Sort != "" {
+		orderBy := pageable.Sort
+		if strings.ContainsAny(orderBy, ` ()'"`) {
+			orderBy = ""
+		}
+		if strings.HasPrefix(orderBy, "-") {
+			orderBy = orderBy[1:] + " DESC"
+		} else {
+			if strings.HasPrefix(orderBy, "+") {
+				orderBy = orderBy[1:]
+			}
+			orderBy += " ASC"
+		}
+		this.DbQuery = this.DbQuery.OrderExpr(orderBy)
 	}
 
 	if pageable.PageNumber < 1 {
@@ -142,22 +160,6 @@ func (this *ListRawHelper) getQueryPageablePostfix() {
 	// if err != nil {
 	// 	return total
 	// }
-
-	if pageable.Sort != "" {
-		orderBy := pageable.Sort
-		if strings.ContainsAny(orderBy, ` ()'"`) {
-			orderBy = ""
-		}
-		if strings.HasPrefix(orderBy, "-") {
-			orderBy = orderBy[1:] + " DESC"
-		} else {
-			if strings.HasPrefix(orderBy, "+") {
-				orderBy = orderBy[1:]
-			}
-			orderBy += " ASC"
-		}
-		this.DbQuery = this.DbQuery.OrderExpr(orderBy)
-	}
 }
 
 func (this *ListRawHelper) SetCondArrLike(condKey string, dbKeys ...string) {
@@ -174,9 +176,41 @@ func (this *ListRawHelper) SetCondArrParam(condKey string, trueLikeFalseEqual bo
 
 	s, ok := pageable.CondArr[condKey]
 	if ok {
-		this.Where += "AND ("
+		if this.Where != "" {
+			this.Where += " AND"
+		}
+		this.Where += " ("
 		for i := 0; i < c; i++ {
 			v := dbKeys[i]
+
+			var v2 interface{}
+			switch valueType {
+			case String:
+				if trueLikeFalseEqual {
+					s = "%" + s + "%"
+				}
+				v2 = s
+			case Int:
+				tmp, err := strconv.Atoi(s)
+				if err != nil {
+					log.Printf("SetCondArrParam Atoi %s=%v error: %s\n", v, v2, err.Error())
+					return
+				}
+				v2 = tmp
+			case Int64:
+				tmp, err := strconv.ParseInt(s, 10, 64)
+				if err != nil {
+					log.Printf("SetCondArrParam praseInt %s=%v error: %s\n", v, v2, err.Error())
+					return
+				}
+				v2 = tmp
+			}
+			if v2 == nil {
+				log.Printf("SetCondArrParam prase %s=nil\n", v)
+				break
+			}
+
+			this.WhereArgs = append(this.WhereArgs, v2)
 			if trueLikeFalseEqual {
 				this.Where += v + " like ?"
 			} else {
@@ -185,37 +219,15 @@ func (this *ListRawHelper) SetCondArrParam(condKey string, trueLikeFalseEqual bo
 			if i != c-1 {
 				this.Where += " OR "
 			}
-
-			var v2 interface{}
-			switch valueType {
-			case String:
-				v2 = s
-			case Int:
-				tmp, err := strconv.Atoi(s)
-				if err != nil {
-					return
-				}
-				v2 = tmp
-			case Int64:
-				tmp, err := strconv.ParseInt(s, 10, 64)
-				if err != nil {
-					return
-				}
-				v2 = tmp
-			}
-			if v2 == nil {
-				return
-			}
-			this.WhereArgs = append(this.WhereArgs, v2)
 		}
-		this.Where += ")"
+		this.Where += " ) "
 	}
 }
 
 func (this *ListRawHelper) Query() (int64, error) {
 
 	if this.DbQuery == nil {
-		return 0, errors.New("db is nil")
+		return 0, errors.New("DbQuery is nil")
 	}
 
 	pageable := this.Pageable
