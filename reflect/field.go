@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-func GetStructFieldToString(ob interface{}, field string) string {
-	v := GetStructField(ob, field)
+func GetStructFieldToString(ob interface{}, field string, caseSensitive ...bool) string {
+	v := GetStructField(ob, field, caseSensitive...)
 	return GetValueString(v)
 }
 
@@ -38,7 +38,7 @@ func GetValueString(v interface{}) string {
 	return ret
 }
 
-func GetStructField(v interface{}, field string) interface{} {
+func GetStructField(v interface{}, field string, caseSensitive ...bool) interface{} {
 
 	if field == "" {
 		return nil
@@ -48,11 +48,16 @@ func GetStructField(v interface{}, field string) interface{} {
 
 	ret := v
 
+	caseS := true
+	if len(caseSensitive) > 0 {
+		caseS = caseSensitive[0]
+	}
+
 	var i int
 	for c := len(ks); i < c; i++ {
 		k := ks[i]
 
-		ret = GetStructFieldSimple(ret, k)
+		ret = GetStructFieldSimple(ret, k, caseS)
 		if ret == nil {
 			break
 		}
@@ -61,7 +66,7 @@ func GetStructField(v interface{}, field string) interface{} {
 	return ret
 }
 
-func GetStructFieldSimple(v interface{}, field string) interface{} {
+func GetStructFieldSimple(v interface{}, field string, caseSensitive bool) interface{} {
 
 	if v == nil || field == "" {
 		return nil
@@ -74,23 +79,26 @@ func GetStructFieldSimple(v interface{}, field string) interface{} {
 		val = val.Elem()
 	}
 
-	v2 := val.FieldByName(field)
-	if v2.IsValid() {
-		return v2.Interface()
+	if caseSensitive {
+		v2 := val.FieldByName(field)
+		if v2.IsValid() {
+			return v2.Interface()
+		}
+	} else {
+		field = strings.ToLower(field)
+		c := val.NumField()
+		for i := 0; i < c; i++ {
+			valueField := val.Field(i)
+			typeField := val.Type().Field(i)
+
+			if strings.ToLower(typeField.Name) == field {
+				return valueField.Interface()
+			}
+
+			// tag := typeField.Tag
+			// fmt.Printf("Field Name: %s,\t Field Value: %v,\t Tag Value: %s\n", typeField.Name, valueField.Interface(), tag.Get("tag_name"))
+		}
 	}
-
-	// c := val.NumField()
-	// for i := 0; i < c; i++ {
-	// 	valueField := val.Field(i)
-	// 	typeField := val.Type().Field(i)
-
-	// 	if typeField.Name == field {
-	// 		return valueField.Interface()
-	// 	}
-
-	// 	// tag := typeField.Tag
-	// 	// fmt.Printf("Field Name: %s,\t Field Value: %v,\t Tag Value: %s\n", typeField.Name, valueField.Interface(), tag.Get("tag_name"))
-	// }
 	return nil
 }
 
