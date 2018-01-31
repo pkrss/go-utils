@@ -53,7 +53,7 @@ func main() {
 	profile.SetMyGetString(conf.GetString)
 
 	pkControllers.AddRouter("/:Id/test1", &MainController{}, "get:Test1")
-	pkControllers.AddRouter("/", &MainController{})
+	r := pkControllers.AddRouter("/", &MainController{})
 
 	// pkControllers.SetStaticPath("/s", "s")
 
@@ -62,5 +62,5 @@ func main() {
 	pkControllers.UserController = &MyControllerUser{}
 
 	port := profile.ProfileReadString("httpport", "8080")
-	log.Fatal(http.ListenAndServe("0.0.0.0:"+port, nil))
+	log.Fatal(http.ListenAndServe("0.0.0.0:"+port, r))
 }
