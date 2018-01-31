@@ -16,6 +16,9 @@ type ControllerInterface interface {
 	// Put()
 	// Patch()
 
+	OnPrepare()
+	OnLeave()
+
 	SetUrlParameters(p map[string]string)
 	SetResponseWriter(w http.ResponseWriter)
 	SetRequest(r *http.Request)
@@ -28,6 +31,14 @@ type Controller struct {
 	R *http.Request
 
 	UrlParameters map[string]string
+}
+
+func (this *Controller) OnPrepare() {
+
+}
+
+func (this *Controller) OnLeave() {
+
 }
 
 // func (this *Controller) Get() {

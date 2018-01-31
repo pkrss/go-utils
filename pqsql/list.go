@@ -2,6 +2,7 @@ package pqsql
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -19,15 +20,19 @@ const (
 	String ValueType = iota
 	Int64
 	Int
+	InSqlStrVar
 )
 
 type ListRawHelper struct {
 	DbQuery           *orm.Query
+	Db                *pg.DB
 	Pageable          *beans.Pageable
 	Where             string
 	WhereArgs         []interface{}
 	ResultListPointer interface{}
 	TotalResult       int64
+	ObjModel          BaseModelInterface
+	UserData          interface{}
 }
 
 func MakeListRawHelper(resultListPointer interface{}, pageable *beans.Pageable) *ListRawHelper {
@@ -116,7 +121,7 @@ func (this *ListRawHelper) appendNormalWhereConds() {
 	}
 }
 
-func (this *ListRawHelper) getQueryPageablePostfix() {
+func (this *ListRawHelper) getQueryPageablePostfix(sql *string) {
 	pageable := this.Pageable
 
 	if pageable == nil {
@@ -136,7 +141,11 @@ func (this *ListRawHelper) getQueryPageablePostfix() {
 			}
 			orderBy += " ASC"
 		}
-		this.DbQuery = this.DbQuery.OrderExpr(orderBy)
+		if sql == nil {
+			this.DbQuery = this.DbQuery.OrderExpr(orderBy)
+		} else {
+			*sql = *sql + " " + orderBy
+		}
 	}
 
 	if pageable.PageNumber < 1 {
@@ -151,19 +160,19 @@ func (this *ListRawHelper) getQueryPageablePostfix() {
 	if offset == 0 {
 		offset = (pageable.PageNumber - 1) * pageable.PageSize
 	}
-
-	this.DbQuery = this.DbQuery.Limit(pageable.PageSize).Offset(offset)
-
-	// o := orm.NewOrm()
-	// var total int64
-	// err := o.Raw("SELECT COUNT(*) FROM " + tableName + " " + cond).QueryRow(&total)
-	// if err != nil {
-	// 	return total
-	// }
+	if sql == nil {
+		this.DbQuery = this.DbQuery.Limit(pageable.PageSize).Offset(offset)
+	} else {
+		*sql = *sql + fmt.Sprintf(" limit %d offset %v", pageable.PageSize, offset)
+	}
 }
 
 func (this *ListRawHelper) SetCondArrLike(condKey string, dbKeys ...string) {
 	this.SetCondArrParam(condKey, true, String, dbKeys...)
+}
+
+func (this *ListRawHelper) SetCondArrEqu(condKey string, valueType ValueType, dbKeys ...string) {
+	this.SetCondArrParam(condKey, false, valueType, dbKeys...)
 }
 
 func (this *ListRawHelper) SetCondArrParam(condKey string, trueLikeFalseEqual bool, valueType ValueType, dbKeys ...string) {
@@ -180,44 +189,53 @@ func (this *ListRawHelper) SetCondArrParam(condKey string, trueLikeFalseEqual bo
 			this.Where += " AND"
 		}
 		this.Where += " ("
-		for i := 0; i < c; i++ {
-			v := dbKeys[i]
 
-			var v2 interface{}
-			switch valueType {
-			case String:
+		if valueType == InSqlStrVar {
+			this.Where += s
+			for i := 0; i < c; i++ {
+				this.WhereArgs = append(this.WhereArgs, dbKeys[i])
+			}
+		} else {
+
+			for i := 0; i < c; i++ {
+				v := dbKeys[i]
+
+				var v2 interface{}
+				switch valueType {
+				case String:
+					if trueLikeFalseEqual {
+						s = "%" + s + "%"
+					}
+					v2 = s
+				case Int:
+					tmp, err := strconv.Atoi(s)
+					if err != nil {
+						log.Printf("SetCondArrParam Atoi %s=%v error: %s\n", v, v2, err.Error())
+						return
+					}
+					v2 = tmp
+				case Int64:
+					tmp, err := strconv.ParseInt(s, 10, 64)
+					if err != nil {
+						log.Printf("SetCondArrParam praseInt %s=%v error: %s\n", v, v2, err.Error())
+						return
+					}
+					v2 = tmp
+				}
+				if v2 == nil {
+					log.Printf("SetCondArrParam prase %s=nil\n", v)
+					break
+				}
+
+				this.WhereArgs = append(this.WhereArgs, v2)
 				if trueLikeFalseEqual {
-					s = "%" + s + "%"
+					this.Where += v + " like ?"
+				} else {
+					this.Where += v + " = ?"
 				}
-				v2 = s
-			case Int:
-				tmp, err := strconv.Atoi(s)
-				if err != nil {
-					log.Printf("SetCondArrParam Atoi %s=%v error: %s\n", v, v2, err.Error())
-					return
+				if i != c-1 {
+					this.Where += " OR "
 				}
-				v2 = tmp
-			case Int64:
-				tmp, err := strconv.ParseInt(s, 10, 64)
-				if err != nil {
-					log.Printf("SetCondArrParam praseInt %s=%v error: %s\n", v, v2, err.Error())
-					return
-				}
-				v2 = tmp
-			}
-			if v2 == nil {
-				log.Printf("SetCondArrParam prase %s=nil\n", v)
-				break
-			}
-
-			this.WhereArgs = append(this.WhereArgs, v2)
-			if trueLikeFalseEqual {
-				this.Where += v + " like ?"
-			} else {
-				this.Where += v + " = ?"
-			}
-			if i != c-1 {
-				this.Where += " OR "
 			}
 		}
 		this.Where += " ) "
@@ -246,7 +264,7 @@ func (this *ListRawHelper) Query() (int64, error) {
 		this.DbQuery = this.DbQuery.Where(this.Where, this.WhereArgs...)
 	}
 
-	this.getQueryPageablePostfix()
+	this.getQueryPageablePostfix(nil)
 
 	cnt, err := this.DbQuery.SelectAndCount(this.ResultListPointer)
 	if err != nil {
@@ -256,43 +274,43 @@ func (this *ListRawHelper) Query() (int64, error) {
 	this.TotalResult = int64(cnt)
 
 	return this.TotalResult, nil
+}
 
-	// v := reflect.ValueOf(this.ResultListPointer)
-	// switch v.Kind() {
-	// case reflect.Ptr:
-	// 	v = v.Elem()
-	// }
+func (this *ListRawHelper) SelSqlListQuery(selSql string) (total int64, e error) {
 
-	// for i := 0; rows.Next(); i++ {
-	// 	// json.Unmarshal()
+	pageable := this.Pageable
 
-	// 	// Get element of array, growing if necessary.
-	// 	if v.Kind() == reflect.Slice {
-	// 		// Grow slice if necessary
-	// 		if i >= v.Cap() {
-	// 			newcap := v.Cap() + v.Cap()/2
-	// 			if newcap < 4 {
-	// 				newcap = 4
-	// 			}
-	// 			newv := reflect.MakeSlice(v.Type(), v.Len(), newcap)
-	// 			reflect.Copy(newv, v)
-	// 			v.Set(newv)
-	// 		}
-	// 		if i >= v.Len() {
-	// 			v.SetLen(i + 1)
-	// 		}
-	// 	}
+	if pageable == nil {
+		e = errors.New("pageable is nil")
+		return
+	}
 
-	// 	if i < v.Len() {
-	// 		// Decode into element.
-	// 		rows.Scan(v.Index(i))
-	// 		// d.value(v.Index(i))
-	// 	} else {
-	// 		// Ran out of fixed array: skip.
-	// 		// d.value(reflect.Value{})
-	// 	}
+	this.appendNormalWhereConds()
 
-	// }
+	sql := "SELECT COUNT(*) FROM " + this.ObjModel.TableName() + " " + this.Where
+	_, e = this.Db.QueryOne(pg.Scan(&total), sql, this.WhereArgs...)
+	if e != nil {
+		return
+	}
+	this.TotalResult = total
 
-	// return this.TotalResult, nil
+	if selSql == "" {
+		selSql = `SELECT `
+
+		c := len(pageable.Columns)
+		if c == 0 {
+			selSql += `*`
+		} else {
+			selSql += strings.Join(pageable.Columns, ",")
+		}
+		selSql += ` FROM ` + this.ObjModel.TableName()
+	}
+	sql = selSql + " " + this.Where
+
+	this.getQueryPageablePostfix(&sql)
+
+	_, e = this.Db.Query(this.ResultListPointer, sql, this.WhereArgs...)
+
+	return
+
 }

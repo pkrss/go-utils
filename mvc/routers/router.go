@@ -54,6 +54,7 @@ func (this *Route) Handler(w http.ResponseWriter, r *http.Request, urlPathParame
 	obj.SetResponseWriter(w)
 	obj.SetRequest(r)
 	obj.SetUrlParameters(urlPathParameters)
+	obj.OnPrepare()
 
 	m := objType.MethodByName(methodName)
 
@@ -63,4 +64,6 @@ func (this *Route) Handler(w http.ResponseWriter, r *http.Request, urlPathParame
 	}
 
 	m.Call([]reflect.Value{})
+
+	obj.OnLeave()
 }

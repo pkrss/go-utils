@@ -1,8 +1,10 @@
-package controllers
+package simple
 
 import (
 	"errors"
 	"fmt"
+
+	"github.com/pkrss/go-utils/mvc/controllers"
 )
 
 type SimpleAuthUserInterface interface {
@@ -13,7 +15,7 @@ type SimpleAuthUserInterface interface {
 var DefaultSimpleAuthUserInterface SimpleAuthUserInterface
 
 type SimpleAuthController struct {
-	AuthController
+	controllers.AuthController
 	AuthUserInterface SimpleAuthUserInterface
 }
 

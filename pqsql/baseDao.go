@@ -14,13 +14,17 @@ import (
 )
 
 type BaseDaoInterface interface {
+	CreateModelObject() BaseModelInterface
 	FindOneById(id interface{}) (BaseModelInterface, error)
 	FindOneByFilter(col string, val interface{}, selCols ...string) (BaseModelInterface, error)
 	UpdateByFilter(ob BaseModelInterface, col string, val interface{}, structColsParams ...[]string) error
 	UpdateById(ob BaseModelInterface, id interface{}, structColsParams ...[]string) error
 	Insert(ob BaseModelInterface, structColsParams ...[]string) error
-	SelectListByRawHelper(listRawHelper *ListRawHelper, cb ...SelectListCallback) (int64, error)
-	SelectList(resultListPointer interface{}, pageable *beans.Pageable, cb ...SelectListCallback) (int64, error)
+	SelectListByRawHelper(listRawHelper *ListRawHelper, userData interface{}, cb ...SelectListCallback) (int64, error)
+	SelectList(resultListPointer interface{}, pageable *beans.Pageable, userData interface{}, cb ...SelectListCallback) (int64, error)
+	SelectSelSqlList(partSql string, resultListPointer []BaseModelInterface, pageable *beans.Pageable, userData interface{}, cb ...SelectListCallback) (int64, error)
+	DeleteOneById(id interface{}) error
+	DeleteByFilter(col string, val interface{}) error
 }
 
 type BaseDao struct {
@@ -43,6 +47,11 @@ func CreateBaseDao(v BaseModelInterface) (dao BaseDaoInterface) {
 	dbTable.Name = types.Q(v.TableName())
 
 	return &ret
+}
+func (this *BaseDao) CreateModelObject() BaseModelInterface {
+	objType := reflect.New(this.ObjType)
+	obj := objType.Elem().Addr().Interface().(BaseModelInterface)
+	return obj
 }
 
 func (this *BaseDao) GetDb() (*pg.DB, error) {
@@ -67,8 +76,7 @@ func (this *BaseDao) FindOneByFilter(col string, val interface{}, selCols ...str
 		return nil, err
 	}
 
-	objType := reflect.New(this.ObjType)
-	obj := objType.Elem().Addr().Interface().(BaseModelInterface)
+	obj := this.CreateModelObject()
 
 	models := db.Model(obj).Where(col+" = ?", val)
 	if len(selCols) > 0 {
@@ -105,6 +113,23 @@ func (this *BaseDao) UpdateByFilter(ob BaseModelInterface, col string, val inter
 	return err
 }
 
+func (this *BaseDao) DeleteOneById(id interface{}) error {
+	return this.DeleteByFilter(this.ObjModel.IdColumn(), id)
+}
+
+func (this *BaseDao) DeleteByFilter(col string, val interface{}) error {
+	db, err := this.GetDb()
+	if err != nil {
+		return err
+	}
+
+	models := db.Model(this.ObjModel).Where(col+" = ?", val)
+
+	_, err = models.Delete()
+
+	return err
+}
+
 func (this *BaseDao) UpdateById(ob BaseModelInterface, id interface{}, structColsParams ...[]string) error {
 	return this.UpdateByFilter(ob, ob.IdColumn(), id, structColsParams...)
 }
@@ -131,7 +156,47 @@ func (this *BaseDao) Insert(ob BaseModelInterface, structColsParams ...[]string)
 
 type SelectListCallback func(listRawHelper *ListRawHelper)
 
-func (this *BaseDao) SelectListByRawHelper(listRawHelper *ListRawHelper, cb ...SelectListCallback) (int64, error) {
+func (this *BaseDao) SelectListByRawHelper(listRawHelper *ListRawHelper, userData interface{}, cb ...SelectListCallback) (int64, error) {
+
+	if listRawHelper.DbQuery == nil {
+
+		db, err := this.GetDb()
+		if err != nil {
+			return 0, err
+		}
+		listRawHelper.DbQuery = db.Model(this.ObjModel)
+	}
+
+	listRawHelper.UserData = userData
+
+	if len(cb) > 0 {
+		cb[0](listRawHelper)
+	}
+
+	return listRawHelper.Query()
+}
+
+func (this *BaseDao) SelectList(resultListPointer interface{}, pageable *beans.Pageable, userData interface{}, cb ...SelectListCallback) (int64, error) {
+
+	if this.ObjModel.TableName() == "" {
+		return 0, errors.New("tableName is empty")
+	}
+
+	listRawHelper := MakeListRawHelper(resultListPointer, pageable)
+
+	return this.SelectListByRawHelper(listRawHelper, userData, cb...)
+}
+
+func (this *BaseDao) SelectSelSqlList(partSql string, resultListPointer []BaseModelInterface, pageable *beans.Pageable, userData interface{}, cb ...SelectListCallback) (int64, error) {
+
+	if this.ObjModel.TableName() == "" {
+		return 0, errors.New("tableName is empty")
+	}
+
+	listRawHelper := MakeListRawHelper(resultListPointer, pageable)
+	listRawHelper.ObjModel = this.ObjModel
+	listRawHelper.Db = this.Db
+	listRawHelper.UserData = userData
 
 	if listRawHelper.DbQuery == nil {
 
@@ -146,27 +211,6 @@ func (this *BaseDao) SelectListByRawHelper(listRawHelper *ListRawHelper, cb ...S
 		cb[0](listRawHelper)
 	}
 
-	return listRawHelper.Query()
-}
+	return listRawHelper.SelSqlListQuery(partSql)
 
-func (this *BaseDao) SelectList(resultListPointer interface{}, pageable *beans.Pageable, cb ...SelectListCallback) (int64, error) {
-	// v := reflect.ValueOf(resultListPointer)
-	// switch v.Kind() {
-	// case reflect.Ptr:
-	// 	v = v.Elem()
-	// }
-
-	tableName := this.ObjModel.TableName()
-	// if v.Kind() == reflect.Slice {
-	// 	newv := reflect.MakeSlice(v.Type(), 1, 1)
-	// 	tableName = getTableName(newv.Index(0))
-	// }
-
-	if tableName == "" {
-		return 0, errors.New("tableName is empty")
-	}
-
-	listRawHelper := MakeListRawHelper(resultListPointer, pageable)
-
-	return this.SelectListByRawHelper(listRawHelper, cb...)
 }
