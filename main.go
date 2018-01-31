@@ -10,6 +10,7 @@ import (
 )
 
 ////////////////////////////////////////////////////////////////////////////////
+// system parse token
 
 type MyControllerUser struct {
 }
@@ -27,6 +28,7 @@ func (this *MyControllerUser) SaveTokenObj(token string, obj interface{}) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// one controller
 
 type MainController struct {
 	pkControllers.Controller
@@ -41,7 +43,9 @@ func (this *MainController) Test1() {
 	this.JsonResult("Test1:" + id)
 }
 
+////////////////////////////////////////////////////////////////////////////////
 // below is sample code, your can umcomment below comment when used.
+
 func main() {
 
 	conf.InitByConfigFile()

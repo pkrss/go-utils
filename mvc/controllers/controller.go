@@ -16,20 +16,18 @@ type ControllerInterface interface {
 	// Put()
 	// Patch()
 
+	SetUrlParameters(p map[string]string)
 	SetResponseWriter(w http.ResponseWriter)
 	SetRequest(r *http.Request)
 
 	AjaxError(message string, codes ...int)
-
-	LoadUserToken() string
 }
 
 type Controller struct {
-	W              http.ResponseWriter
-	R              *http.Request
-	UserContext    interface{}
-	Token          string
-	UserController ControllerUserInterface
+	W http.ResponseWriter
+	R *http.Request
+
+	UrlParameters map[string]string
 }
 
 // func (this *Controller) Get() {
@@ -48,6 +46,10 @@ type Controller struct {
 // 	this.Patch()
 // }
 
+func (this *Controller) SetUrlParameters(p map[string]string) {
+	this.UrlParameters = p
+}
+
 func (this *Controller) SetResponseWriter(w http.ResponseWriter) {
 	this.W = w
 }
@@ -56,16 +58,22 @@ func (this *Controller) SetRequest(r *http.Request) {
 	this.R = r
 }
 
-// Query returns input data item string by a given string.
-func (this *Controller) GetUserController() ControllerUserInterface {
-	if this.UserController != nil {
-		return this.UserController
-	}
-	return UserController
-}
-
-// Query returns input data item string by a given string.
+/*
+	\param key string, ":k": search in url path paramters, else search in url paramters
+*/
 func (this *Controller) Query(key string) string {
+	if key == "" {
+		return ""
+	}
+
+	if key[0] == ':' {
+		if len(key) == 1 {
+			return ""
+		}
+		v, _ := this.UrlParameters[key[1:]]
+		return v
+	}
+
 	this.R.ParseForm()
 	return this.R.Form.Get(key)
 }
@@ -94,74 +102,6 @@ func (this *Controller) CookieValue(key string) string {
 	return c.Value
 }
 
-func (this *Controller) LoadUserToken() string {
-
-	token := this.Token
-
-	if token != "" {
-		return token
-	}
-
-	u := this.GetUserController()
-	if u == nil {
-		return ""
-	}
-	tokenKey := u.TokenKey()
-
-	for f := true; f; f = false {
-
-		k := tokenKey
-
-		if token != "" {
-			break
-		}
-
-		token = this.Header(k)
-
-		if token != "" {
-			break
-		}
-
-		token = this.Query(k)
-
-		if token != "" {
-			break
-		}
-
-		token = this.CookieValue(k)
-
-		if token != "" {
-			break
-		}
-	}
-
-	this.Token = token
-
-	return token
-}
-
-//读取登录状态
-func (this *Controller) LoadUserContext() interface{} {
-	if this.UserContext != nil {
-		return this.UserContext
-	}
-
-	token := this.LoadUserToken()
-
-	if token == "" {
-		return nil
-	}
-
-	u := this.GetUserController()
-	if u == nil {
-		return nil
-	}
-
-	this.UserContext = u.LoadTokenObj(token)
-
-	return this.UserContext
-}
-
 func (this *Controller) JsonResult(out interface{}) {
 	this.W.Header().Add("Content-Type", "application/json; charset=utf-8")
 
@@ -173,6 +113,11 @@ func (this *Controller) JsonResult(out interface{}) {
 	}
 
 	this.W.Write(content)
+}
+
+func (this *Controller) AjaxUnAuthorized(message string, codes ...int) {
+	this.W.WriteHeader(401)
+	this.AjaxError(message, codes...)
 }
 
 func (this *Controller) AjaxError(message string, codes ...int) {

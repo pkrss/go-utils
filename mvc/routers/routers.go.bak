@@ -1,0 +1,82 @@
+package routers
+
+import (
+	"net/http"
+	"reflect"
+	"regexp"
+	"strings"
+
+	"github.com/pkrss/go-utils/mvc/controllers"
+)
+
+type App struct {
+	Routes []*Route
+}
+
+func (this *App) addHandleChilds(pattern string, route *Route) {
+
+}
+
+func (this *App) AddHandle(pattern string, c controllers.ControllerInterface, methodStrs ...string) {
+
+	val := reflect.ValueOf(c)
+	switch val.Kind() {
+	case reflect.Ptr:
+		val = val.Elem()
+	}
+	contollerType := reflect.TypeOf(val.Interface())
+
+	methodStr := ""
+	if len(methodStrs) > 0 {
+		methodStr = methodStrs[0]
+	}
+
+	route := Route{PatternStr: pattern, ContollerType: contollerType, MethodStr: methodStr}
+
+	if strings.Contains(pattern, "(") {
+		route.Pattern = regexp.MustCompile(pattern)
+	}
+
+	this.addHandleChilds(pattern, route)
+
+	this.Routes = append(this.Routes, &route)
+}
+
+func (this *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	for _, rt := range this.Routes {
+		if rt.Pattern == nil {
+			rt.Handler(w, r, nil)
+			return
+		}
+		if matches := rt.Pattern.FindStringSubmatch(r.URL.Path); len(matches) > 0 {
+			var urlPathParemeters []string
+			if len(matches) > 1 {
+				urlPathParemeters = matches[1:]
+			}
+			rt.Handler(w, r, urlPathParemeters)
+			return
+		}
+	}
+
+	NotFoundHandler(w, r)
+}
+
+var app App
+
+func AddRouter(pattern string, c controllers.ControllerInterface, methodStr ...string) *App {
+
+	if len(pattern) == 0 || pattern[0] != '/' {
+		pattern = "/" + pattern
+	}
+
+	app.AddHandle(pattern, c, methodStr)
+
+	return &app
+}
+
+func SetStaticPath(urlPattern string, fileLocalDir string) {
+	fsh := http.FileServer(http.Dir(fileLocalDir))
+	fsh = http.StripPrefix(urlPattern, fsh)
+	http.Handle(urlPattern, fsh)
+}
