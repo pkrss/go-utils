@@ -19,8 +19,8 @@ type OAuthApp struct {
 	AppOauthScope         string           `json:"appOauthScope"`
 	AppBaseUrl            string           `json:"appBaseUrl"`
 	AccessToken           string           `json:"accessToken"`
-	AccessTokenExpireTime baseOrm.JsonTime `json:"accessTokenExpireTime" pg:",datetime"`
-	CreateTime            baseOrm.JsonTime `json:"createTime" pg:",datetime"`
+	AccessTokenExpireTime baseOrm.JsonTime `json:"accessTokenExpireTime"`
+	CreateTime            baseOrm.JsonTime `json:"createTime"`
 }
 
 func (this *OAuthApp) TableName() string {

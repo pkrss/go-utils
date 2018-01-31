@@ -295,6 +295,10 @@ func (this *ListRawHelper) SelSqlListQuery(selSql string) (total int64, e error)
 	this.TotalResult = total
 
 	if selSql == "" {
+		selSql = this.ObjModel.SelSql()
+	}
+
+	if selSql == "" {
 		selSql = `SELECT `
 
 		c := len(pageable.Columns)

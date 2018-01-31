@@ -78,12 +78,19 @@ func (this *BaseDao) FindOneByFilter(col string, val interface{}, selCols ...str
 
 	obj := this.CreateModelObject()
 
-	models := db.Model(obj).Where(col+" = ?", val)
-	if len(selCols) > 0 {
-		models = models.Column(selCols...)
+	selSql := this.ObjModel.SelSql()
+	if selSql == "" {
+
+		models := db.Model(obj).Where(col+" = ?", val)
+		if len(selCols) > 0 {
+			models = models.Column(selCols...)
+		}
+
+		err = models.Select(obj)
+	} else {
+		_, err = db.QueryOne(obj, selSql+" WHERE "+col+" = ?", val)
 	}
 
-	err = models.Select(obj)
 	if err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@ type BaseModelInterface interface {
 	TableName() string
 	IdColumn() string
 	FilterValue()
+	SelSql() string
 }
 
 type BaseModel struct {
@@ -18,4 +19,8 @@ func (this *BaseModel) IdColumn() string {
 }
 
 func (this *BaseModel) FilterValue() {
+}
+
+func (this *BaseModel) SelSql() string {
+	return ""
 }
