@@ -22,6 +22,15 @@ const (
 	InSqlStrVar
 )
 
+type DbSqlType int
+
+// iota 初始化后会自动递增
+const (
+	_ DbSqlType = iota
+	PgSql
+	MySql
+)
+
 type ListRawHelper struct {
 	Db        *pg.DB
 	Pageable  *beans.Pageable
@@ -29,6 +38,7 @@ type ListRawHelper struct {
 	WhereArgs []interface{}
 	ObjModel  BaseModelInterface
 	UserData  interface{}
+	SqlType   DbSqlType
 }
 
 func (this *ListRawHelper) appendNormalWhereConds() {
@@ -145,7 +155,12 @@ func (this *ListRawHelper) getQueryPageablePostfix(sql string) string {
 		offset = (pageable.PageNumber - 1) * pageable.PageSize
 	}
 
-	sql = sql + fmt.Sprintf(" limit %d offset %v", pageable.PageSize, offset)
+	switch this.SqlType {
+	case MySql:
+		sql = sql + fmt.Sprintf(" offset %d, %v", offset, pageable.PageSize)
+	default:
+		sql = sql + fmt.Sprintf(" limit %d offset %v", pageable.PageSize, offset)
+	}
 
 	return sql
 }
