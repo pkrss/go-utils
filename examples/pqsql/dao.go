@@ -23,39 +23,28 @@ type OAuthApp struct {
 	CreateTime            baseOrm.JsonTime `json:"createTime"`
 }
 
+var dao pqsql.BaseDaoInterface
+
 func (this *OAuthApp) TableName() string {
 	return "myzc_oauth_app"
 }
 
-func main() {
-	pqsql.Db = pqsql.CreatePgSql()
-
-	id := 1
-	var total int64
-	var e error
-	var oAuthApp OAuthApp
-	var r pqsql.BaseModelInterface
-	dao := pqsql.CreateBaseDao(&oAuthApp)
-
+func testMakeSlice() {
 	l := dao.CreateModelSlice(10, 10)
-	log.Printf("slice :%v\n", l)
+	log.Printf("testMakeSlice :%v\n", l)
+	// testMakeSlice :&[{{} 0        {0 0 <nil>} {0 0 <nil>}} {{} 0        {0 0 <nil>} {0 0 <nil>}} {{} 0        {0 0 <nil>} {0 0 <nil>}} {{} 0        {0 0 <nil>} {0 0 <nil>}} {{} 0        {0 0 <nil>} {0 0 <nil>}} {{} 0        {0 0 <nil>} {0 0 <nil>}} {{} 0        {0 0 <nil>} {0 0 <nil>}} {{} 0        {0 0 <nil>} {0 0 <nil>}} {{} 0        {0 0 <nil>} {0 0 <nil>}} {{} 0        {0 0 <nil>} {0 0 <nil>}}]
+}
 
-	if true {
-		return
-	}
-
-	r, e = dao.FindOneById(id)
+func testFindOne() {
+	id := 1
+	r, e := dao.FindOneById(id)
 	if e != nil {
 		log.Printf("FindOneById error:%s\n", e.Error())
 	}
 	log.Printf("FetchById(%v) = %v\n", id, r)
+}
 
-	// dao.FindOneById(id)
-
-	// dao.FindOneById(id)
-
-	// dao.FindOneById(id)
-
+func testFindList() {
 	pageable := beans.Pageable{}
 	pageable.PageSize = 20
 	pageable.Sort = "-id"
@@ -63,12 +52,23 @@ func main() {
 	pageable.CondArr = make(map[string]string, 0)
 	pageable.CondArr["q"] = "WX"
 
-	var oAuthApps []OAuthApp
-	total, e = dao.SelectList(&oAuthApps, &pageable, func(listRawHelper *pqsql.ListRawHelper) {
+	l, total, e := dao.SelectSelSqlList("", &pageable, nil, func(listRawHelper *pqsql.ListRawHelper) {
 		listRawHelper.SetCondArrLike("q", "title", "code")
 	})
 	if e != nil {
 		log.Printf("SelectList error:%s\n", e.Error())
 	}
-	log.Printf("SelectList() total=%v list=%v\n", total, oAuthApps)
+	log.Printf("SelectList() total=%v list=%v\n", total, l)
+}
+
+func main() {
+	pqsql.Db = pqsql.CreatePgSql()
+
+	var oAuthApp OAuthApp
+	dao = pqsql.CreateBaseDao(&oAuthApp)
+
+	// testMakeSlice()
+	// testFindOne()
+	testFindList()
+
 }

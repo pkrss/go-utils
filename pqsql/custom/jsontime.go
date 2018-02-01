@@ -72,8 +72,28 @@ func (e *JsonTime) String() string {
 	return t.Format(time.RFC3339)
 }
 
-func (this *JsonTime) Scan(src interface{}) error {
-	return this.SetRaw(src)
+func (this *JsonTime) Scan(value interface{}) error {
+	switch d := value.(type) {
+	case []byte:
+		value = string(d)
+	}
+	switch d := value.(type) {
+	case string:
+		if len(d) > 0 {
+			t, _ := time.ParseInLocation("2006-01-02 15:04:05", d, time.Local)
+			this.Set(t)
+		}
+		break
+	case time.Time:
+		*this = MakeJsonTime(d)
+	case int64:
+		*this = MakeJsonTime(time.Unix(d, 0))
+	case nil:
+		*this = JsonTime(nilTime)
+	default:
+		return fmt.Errorf("<JsonTime.Scan> unknown value `%v`", value)
+	}
+	return nil
 }
 
 func (e *JsonTime) SetRaw(value interface{}) error {

@@ -10,7 +10,6 @@ import (
 	"github.com/pkrss/go-utils/beans"
 
 	"github.com/go-pg/pg"
-	"github.com/go-pg/pg/orm"
 )
 
 type ValueType int
@@ -24,24 +23,12 @@ const (
 )
 
 type ListRawHelper struct {
-	DbQuery           *orm.Query
-	Db                *pg.DB
-	Pageable          *beans.Pageable
-	Where             string
-	WhereArgs         []interface{}
-	ResultListPointer interface{}
-	TotalResult       int64
-	ObjModel          BaseModelInterface
-	UserData          interface{}
-}
-
-func MakeListRawHelper(resultListPointer interface{}, pageable *beans.Pageable) *ListRawHelper {
-	ret := ListRawHelper{}
-	ret.ResultListPointer = resultListPointer
-	ret.Pageable = pageable
-	ret.WhereArgs = make([]interface{}, 0)
-
-	return &ret
+	Db        *pg.DB
+	Pageable  *beans.Pageable
+	Where     string
+	WhereArgs []interface{}
+	ObjModel  BaseModelInterface
+	UserData  interface{}
 }
 
 func (this *ListRawHelper) appendNormalWhereConds() {
@@ -121,11 +108,11 @@ func (this *ListRawHelper) appendNormalWhereConds() {
 	}
 }
 
-func (this *ListRawHelper) getQueryPageablePostfix(sql *string) {
+func (this *ListRawHelper) getQueryPageablePostfix(sql string) string {
 	pageable := this.Pageable
 
 	if pageable == nil {
-		return
+		return sql
 	}
 
 	if pageable.Sort != "" {
@@ -141,11 +128,8 @@ func (this *ListRawHelper) getQueryPageablePostfix(sql *string) {
 			}
 			orderBy += " ASC"
 		}
-		if sql == nil {
-			this.DbQuery = this.DbQuery.OrderExpr(orderBy)
-		} else {
-			*sql = *sql + " " + orderBy
-		}
+
+		sql = sql + " ORDER BY " + orderBy
 	}
 
 	if pageable.PageNumber < 1 {
@@ -160,11 +144,10 @@ func (this *ListRawHelper) getQueryPageablePostfix(sql *string) {
 	if offset == 0 {
 		offset = (pageable.PageNumber - 1) * pageable.PageSize
 	}
-	if sql == nil {
-		this.DbQuery = this.DbQuery.Limit(pageable.PageSize).Offset(offset)
-	} else {
-		*sql = *sql + fmt.Sprintf(" limit %d offset %v", pageable.PageSize, offset)
-	}
+
+	sql = sql + fmt.Sprintf(" limit %d offset %v", pageable.PageSize, offset)
+
+	return sql
 }
 
 func (this *ListRawHelper) SetCondArrLike(condKey string, dbKeys ...string) {
@@ -241,42 +224,7 @@ func (this *ListRawHelper) SetCondArrParam(condKey string, trueLikeFalseEqual bo
 		this.Where += " ) "
 	}
 }
-
-func (this *ListRawHelper) Query() (int64, error) {
-
-	if this.DbQuery == nil {
-		return 0, errors.New("DbQuery is nil")
-	}
-
-	pageable := this.Pageable
-
-	if pageable == nil {
-		return 0, errors.New("pageable is nil")
-	}
-
-	this.appendNormalWhereConds()
-
-	if len(pageable.Columns) > 0 {
-		this.DbQuery = this.DbQuery.Column(pageable.Columns...)
-	}
-
-	if this.Where != "" {
-		this.DbQuery = this.DbQuery.Where(this.Where, this.WhereArgs...)
-	}
-
-	this.getQueryPageablePostfix(nil)
-
-	cnt, err := this.DbQuery.SelectAndCount(this.ResultListPointer)
-	if err != nil {
-		return 0, err
-	}
-
-	this.TotalResult = int64(cnt)
-
-	return this.TotalResult, nil
-}
-
-func (this *ListRawHelper) SelSqlListQuery(selSql string) (total int64, e error) {
+func (this *ListRawHelper) SelSqlListQuery(selSql string, resultListPointer interface{}) (total int64, e error) {
 
 	pageable := this.Pageable
 
@@ -287,12 +235,16 @@ func (this *ListRawHelper) SelSqlListQuery(selSql string) (total int64, e error)
 
 	this.appendNormalWhereConds()
 
-	sql := "SELECT COUNT(*) FROM " + this.ObjModel.TableName() + " " + this.Where
+	sql := "SELECT COUNT(*) FROM " + this.ObjModel.TableName()
+
+	if this.Where != "" {
+		sql += " WHERE " + this.Where
+	}
+
 	_, e = this.Db.QueryOne(pg.Scan(&total), sql, this.WhereArgs...)
 	if e != nil {
 		return
 	}
-	this.TotalResult = total
 
 	if selSql == "" {
 		selSql = this.ObjModel.SelSql()
@@ -309,11 +261,14 @@ func (this *ListRawHelper) SelSqlListQuery(selSql string) (total int64, e error)
 		}
 		selSql += ` FROM ` + this.ObjModel.TableName()
 	}
-	sql = selSql + " " + this.Where
+	sql = selSql
+	if this.Where != "" {
+		sql += " WHERE " + this.Where
+	}
 
-	this.getQueryPageablePostfix(&sql)
+	sql = this.getQueryPageablePostfix(sql)
 
-	_, e = this.Db.Query(this.ResultListPointer, sql, this.WhereArgs...)
+	_, e = this.Db.Query(resultListPointer, sql, this.WhereArgs...)
 
 	return
 

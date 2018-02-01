@@ -15,14 +15,14 @@ import (
 
 type BaseDaoInterface interface {
 	CreateModelObject() BaseModelInterface
+	// create type is: *[]BaseModel
+	CreateModelSlice(len int, cap int) interface{}
 	FindOneById(id interface{}) (BaseModelInterface, error)
 	FindOneByFilter(col string, val interface{}, selCols ...string) (BaseModelInterface, error)
 	UpdateByFilter(ob BaseModelInterface, col string, val interface{}, structColsParams ...[]string) error
 	UpdateById(ob BaseModelInterface, id interface{}, structColsParams ...[]string) error
 	Insert(ob BaseModelInterface, structColsParams ...[]string) error
-	SelectListByRawHelper(listRawHelper *ListRawHelper, userData interface{}, cb ...SelectListCallback) (int64, error)
-	SelectList(resultListPointer interface{}, pageable *beans.Pageable, userData interface{}, cb ...SelectListCallback) (int64, error)
-	SelectSelSqlList(partSql string, resultListPointer []BaseModelInterface, pageable *beans.Pageable, userData interface{}, cb ...SelectListCallback) (int64, error)
+	SelectSelSqlList(partSql string, pageable *beans.Pageable, userData interface{}, cb SelectListCallback) (resultListPointer interface{}, total int64, e error)
 	DeleteOneById(id interface{}) error
 	DeleteByFilter(col string, val interface{}) error
 }
@@ -52,6 +52,16 @@ func (this *BaseDao) CreateModelObject() BaseModelInterface {
 	objType := reflect.New(this.ObjType)
 	obj := objType.Elem().Addr().Interface().(BaseModelInterface)
 	return obj
+}
+func (this *BaseDao) CreateModelSlice(len int, cap int) interface{} {
+	// Create a slice to begin with
+	myType := this.ObjType // reflect.TypeOf(this.ObjModel)
+	slice := reflect.MakeSlice(reflect.SliceOf(myType), len, cap)
+
+	// Create a pointer to a slice value and set it to the slice
+	x := reflect.New(slice.Type())
+	x.Elem().Set(slice)
+	return x.Elem().Addr().Interface().(interface{})
 }
 
 func (this *BaseDao) GetDb() (*pg.DB, error) {
@@ -163,61 +173,33 @@ func (this *BaseDao) Insert(ob BaseModelInterface, structColsParams ...[]string)
 
 type SelectListCallback func(listRawHelper *ListRawHelper)
 
-func (this *BaseDao) SelectListByRawHelper(listRawHelper *ListRawHelper, userData interface{}, cb ...SelectListCallback) (int64, error) {
-
-	if listRawHelper.DbQuery == nil {
-
-		db, err := this.GetDb()
-		if err != nil {
-			return 0, err
-		}
-		listRawHelper.DbQuery = db.Model(this.ObjModel)
-	}
-
-	listRawHelper.UserData = userData
-
-	if len(cb) > 0 {
-		cb[0](listRawHelper)
-	}
-
-	return listRawHelper.Query()
-}
-
-func (this *BaseDao) SelectList(resultListPointer interface{}, pageable *beans.Pageable, userData interface{}, cb ...SelectListCallback) (int64, error) {
+func (this *BaseDao) SelectSelSqlList(partSql string, pageable *beans.Pageable, userData interface{}, cb SelectListCallback) (resultListPointer interface{}, total int64, e error) {
 
 	if this.ObjModel.TableName() == "" {
-		return 0, errors.New("tableName is empty")
+		e = errors.New("tableName is empty")
+		return
 	}
 
-	listRawHelper := MakeListRawHelper(resultListPointer, pageable)
-
-	return this.SelectListByRawHelper(listRawHelper, userData, cb...)
-}
-
-func (this *BaseDao) SelectSelSqlList(partSql string, resultListPointer []BaseModelInterface, pageable *beans.Pageable, userData interface{}, cb ...SelectListCallback) (int64, error) {
-
-	if this.ObjModel.TableName() == "" {
-		return 0, errors.New("tableName is empty")
+	resultListPointer = this.CreateModelSlice(0, 0)
+	db, err := this.GetDb()
+	if err != nil {
+		e = err
+		return
 	}
 
-	listRawHelper := MakeListRawHelper(resultListPointer, pageable)
+	listRawHelper := ListRawHelper{}
+	listRawHelper.Pageable = pageable
+	listRawHelper.WhereArgs = make([]interface{}, 0)
 	listRawHelper.ObjModel = this.ObjModel
-	listRawHelper.Db = this.Db
+	listRawHelper.Db = db
 	listRawHelper.UserData = userData
 
-	if listRawHelper.DbQuery == nil {
-
-		db, err := this.GetDb()
-		if err != nil {
-			return 0, err
-		}
-		listRawHelper.DbQuery = db.Model(this.ObjModel)
+	if cb != nil {
+		cb(&listRawHelper)
 	}
 
-	if len(cb) > 0 {
-		cb[0](listRawHelper)
-	}
+	total, e = listRawHelper.SelSqlListQuery(partSql, resultListPointer)
 
-	return listRawHelper.SelSqlListQuery(partSql)
+	return
 
 }
