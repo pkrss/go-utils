@@ -14,6 +14,7 @@ func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type Route struct {
+	ContollerObj  controllers.ControllerInterface
 	ContollerType reflect.Type
 	MethodStr     string
 }
@@ -54,6 +55,7 @@ func (this *Route) Handler(w http.ResponseWriter, r *http.Request, urlPathParame
 	obj.SetResponseWriter(w)
 	obj.SetRequest(r)
 	obj.SetUrlParameters(urlPathParameters)
+	obj.CloneAttribute(this.ContollerObj)
 	obj.OnPrepare()
 
 	m := objType.MethodByName(methodName)

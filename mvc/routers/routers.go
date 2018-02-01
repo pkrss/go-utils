@@ -18,7 +18,7 @@ func addHandle(pattern string, c controllers.ControllerInterface, methodStr stri
 	}
 	contollerType := reflect.TypeOf(val.Interface())
 
-	route := Route{ContollerType: contollerType, MethodStr: methodStr}
+	route := Route{ContollerType: contollerType, MethodStr: methodStr, ContollerObj: c}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		var p map[string]string

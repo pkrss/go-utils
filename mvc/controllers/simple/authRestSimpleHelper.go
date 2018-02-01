@@ -6,17 +6,17 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/pkrss/go-utils/pqsql"
+	"github.com/pkrss/go-utils/orm"
 )
 
 type SimpleAuthRestHelper struct {
-	Dao           pqsql.BaseDaoInterface
+	Dao           orm.BaseDaoInterface
 	C             SimpleAuthController
 	OldCodeFormat bool
 }
 
 func CreateSimpleAuthRestHelper(c SimpleAuthUserInterface, v pqsql.BaseModelInterface) (ret SimpleAuthRestHelper) {
-	d := pqsql.CreateBaseDao(v)
+	d := orm.CreateBaseDao(v)
 	ret = SimpleAuthRestHelper{C: c, Dao: d}
 	return
 }
@@ -25,23 +25,23 @@ func (this *SimpleAuthRestHelper) OnGetList(l *[]BaseModelInterface, selSql stri
 
 	pageable := this.GetPageableFromRequest()
 
-	total, err := this.Dao.SelectSelSqlList(selSql, l, &pageable, this.C, cb)
+	l, total, err := this.Dao.SelectSelSqlList(selSql, &pageable, this.C, cb)
 	if err != nil {
 		this.AjaxError(err.Error())
 		return
 	}
 
-	this.C.AjaxDbList(pageable, list, len(list), total, this.OldCodeFormat)
+	this.C.AjaxDbList(pageable, l, len(l), total, this.OldCodeFormat)
 }
 
-func (this *SimpleAuthRestHelper) OnGetListWithPrivilege(requiredPrivilege interface{}, l *[]BaseModelInterface, selSql string, cb SelectListCallback) {
+func (this *SimpleAuthRestHelper) OnGetListWithPrivilege(requiredPrivilege interface{}, selSql string, cb SelectListCallback) {
 	e := C.CheckUserPrivilege(requiredPrivilege)
 	if e != nil {
 		this.AjaxUnAuthorized(e.Error())
 		return
 	}
 
-	this.OnGetList(l, selSql, cb)
+	this.OnGetList(selSql, cb)
 }
 
 func (this *SimpleAuthRestHelper) OnPost(structColsParams ...[]string) {
