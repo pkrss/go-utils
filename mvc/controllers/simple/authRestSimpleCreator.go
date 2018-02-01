@@ -15,16 +15,19 @@ type SimpleAuthRestListCreateParams struct {
 
 	PostPrivilege interface{}
 	PostStructColsParams ...[]string
+
+	OnRestDbCbFun OnRestDbCallback
 }
 
 type SimpleAuthRestListCreateController struct {
-	base.SimpleAuthRestController
+	SimpleAuthRestController
 	Params *SimpleAuthRestListCreateParams
 }
 
 func (this *SimpleAuthRestListCreateController) OnPrepare() {
-	this.Model = this.Params.RecordModel
+	this.SimpleAuthRestController.Model = this.Params.RecordModel
 	this.SimpleAuthRestController.OnPrepare()
+	this.SimpleAuthRestController.Helper.OnRestDbCbFun = this.Params.OnRestDbCbFun
 }
 
 func (this *SimpleAuthRestListCreateController) Get() {
@@ -59,6 +62,7 @@ type SimpleAuthRestCreateParams struct {
 	PutStructColsParams ...[]string
 
 	DeletePrivilege interface{}
+	OnRestDbCbFun OnRestDbCallback
 }
 
 type SimpleAuthRestCreateController struct {

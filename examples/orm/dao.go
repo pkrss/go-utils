@@ -53,8 +53,9 @@ func testFindList() {
 	pageable.CondArr = make(map[string]string, 0)
 	pageable.CondArr["q"] = "WX"
 
-	l, total, e := dao.SelectSelSqlList("", &pageable, nil, func(listRawHelper *baseOrm.ListRawHelper) {
+	l, total, e := dao.SelectSelSqlList("", &pageable, nil, func(listRawHelper *baseOrm.ListRawHelper) error {
 		listRawHelper.SetCondArrLike("q", "title", "code")
+		return nil
 	})
 	if e != nil {
 		log.Printf("SelectList error:%s\n", e.Error())

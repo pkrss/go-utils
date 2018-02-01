@@ -6,12 +6,33 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/pkrss/go-utils/mvc/controllers"
 	"github.com/pkrss/go-utils/orm"
 )
+
+type OpType int
+
+const (
+	_ OpType = iota
+	BeforeGetList
+	AfterGetList
+	BeforePost
+	AfterPost
+
+	BeforeGet
+	AfterGet
+	BeforePut
+	AfterPut
+	BeforeDelete
+	AfterDelete
+)
+
+type OnRestDbCallback func(op OpType, ob interface{}, dao orm.BaseDaoInterface, c controllers.ControllerInterface) error
 
 type SimpleAuthRestHelper struct {
 	Dao           orm.BaseDaoInterface
 	C             SimpleAuthController
+	OnRestDbCbFun OnRestDbCallback
 	OldCodeFormat bool
 }
 
@@ -25,10 +46,26 @@ func (this *SimpleAuthRestHelper) OnGetList(l *[]BaseModelInterface, selSql stri
 
 	pageable := this.GetPageableFromRequest()
 
+	if OnRestDbCbFun != nil {
+		e := OnRestDbCbFun(BeforeGetList, nil, this.Dao, this.C)
+		if e != nil {
+			this.AjaxError(err.Error())
+			return
+		}
+	}
+
 	l, total, err := this.Dao.SelectSelSqlList(selSql, &pageable, this.C, cb)
 	if err != nil {
 		this.AjaxError(err.Error())
 		return
+	}
+
+	if err == nil && OnRestDbCbFun != nil {
+		e := OnRestDbCbFun(AfterGetList, l, this.Dao, this.C)
+		if e != nil {
+			this.AjaxError(err.Error())
+			return
+		}
 	}
 
 	this.C.AjaxDbList(pageable, l, len(l), total, this.OldCodeFormat)
@@ -54,7 +91,23 @@ func (this *SimpleAuthRestHelper) OnPost(structColsParams ...[]string) {
 		return
 	}
 
+	if OnRestDbCbFun != nil {
+		e := OnRestDbCbFun(BeforePost, ob, this.Dao, this.C)
+		if e != nil {
+			this.AjaxError(err.Error())
+			return
+		}
+	}
+
 	err := this.Dao.Insert(ob, structColsParams...)
+
+	if err == nil && OnRestDbCbFun != nil {
+		e := OnRestDbCbFun(AfterPost, ob, this.Dao, this.C)
+		if e != nil {
+			this.AjaxError(err.Error())
+			return
+		}
+	}
 
 	if err != nil {
 		this.AjaxError(err.Error())
@@ -112,7 +165,23 @@ func (this *SimpleAuthRestHelper) OnGetOne(k string, t reflect.Kind) {
 		return
 	}
 
+	if OnRestDbCbFun != nil {
+		e := OnRestDbCbFun(BeforeGet, nil, this.Dao, this.C)
+		if e != nil {
+			this.AjaxError(err.Error())
+			return
+		}
+	}
+
 	ob, err := this.Dao.FindOneById(id)
+
+	if err == nil && OnRestDbCbFun != nil {
+		e := OnRestDbCbFun(AfterGet, ob, this.Dao, this.C)
+		if e != nil {
+			this.AjaxError(err.Error())
+			return
+		}
+	}
 
 	if err != nil {
 		this.C.AjaxError(err.Error())
@@ -149,7 +218,23 @@ func (this *SimpleAuthRestHelper) OnPut(k string, t reflect.Kind, structColsPara
 		return
 	}
 
+	if OnRestDbCbFun != nil {
+		e := OnRestDbCbFun(BeforePut, ob, this.Dao, this.C)
+		if e != nil {
+			this.AjaxError(err.Error())
+			return
+		}
+	}
+
 	err := this.Dao.UpdateById(ob, id, structColsParams...)
+
+	if err == nil && OnRestDbCbFun != nil {
+		e := OnRestDbCbFun(AfterPut, ob, this.Dao, this.C)
+		if e != nil {
+			this.AjaxError(err.Error())
+			return
+		}
+	}
 
 	if err != nil {
 		this.C.AjaxError(err.Error())
@@ -185,7 +270,23 @@ func (this *SimpleAuthRestHelper) OnDelete(k string, t reflect.Kind) {
 		return
 	}
 
+	if OnRestDbCbFun != nil {
+		e := OnRestDbCbFun(BeforeDelete, ob, this.Dao, this.C)
+		if e != nil {
+			this.AjaxError(err.Error())
+			return
+		}
+	}
+
 	err := this.Dao.DeleteOneById(id)
+
+	if OnRestDbCbFun != nil {
+		e := OnRestDbCbFun(AfterDelete, ob, this.Dao, this.C)
+		if e != nil {
+			this.AjaxError(err.Error())
+			return
+		}
+	}
 
 	if err != nil {
 		this.C.AjaxError(err.Error())

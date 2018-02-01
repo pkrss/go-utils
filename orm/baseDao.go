@@ -128,7 +128,7 @@ func (this *BaseDao) Insert(ob BaseModelInterface, structColsParams ...[]string)
 	return this.OrmAdapter.Insert(ob, selCols...)
 }
 
-type SelectListCallback func(listRawHelper *ListRawHelper)
+type SelectListCallback func(listRawHelper *ListRawHelper) error
 
 func (this *BaseDao) SelectSelSqlList(partSql string, pageable *beans.Pageable, userData interface{}, cb SelectListCallback) (resultListPointer interface{}, total int64, e error) {
 
@@ -147,7 +147,10 @@ func (this *BaseDao) SelectSelSqlList(partSql string, pageable *beans.Pageable, 
 	listRawHelper.UserData = userData
 
 	if cb != nil {
-		cb(&listRawHelper)
+		e = cb(&listRawHelper)
+		if e != nil {
+			return
+		}
 	}
 
 	total, e = listRawHelper.SelSqlListQuery(partSql, resultListPointer)
