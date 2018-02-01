@@ -1,4 +1,4 @@
-package pqsql
+package orm
 
 import (
 	"reflect"

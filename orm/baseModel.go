@@ -1,4 +1,4 @@
-package pqsql
+package orm
 
 type BaseModelInterface interface {
 	TableName() string

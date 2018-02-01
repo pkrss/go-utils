@@ -1,15 +1,12 @@
-package pqsql
+package orm
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"strconv"
 	"strings"
 
 	"github.com/pkrss/go-utils/beans"
-
-	"github.com/go-pg/pg"
 )
 
 type ValueType int
@@ -22,23 +19,13 @@ const (
 	InSqlStrVar
 )
 
-type DbSqlType int
-
-// iota 初始化后会自动递增
-const (
-	_ DbSqlType = iota
-	PgSql
-	MySql
-)
-
 type ListRawHelper struct {
-	Db        *pg.DB
-	Pageable  *beans.Pageable
-	Where     string
-	WhereArgs []interface{}
-	ObjModel  BaseModelInterface
-	UserData  interface{}
-	SqlType   DbSqlType
+	OrmAdapter OrmAdapterInterface
+	Pageable   *beans.Pageable
+	Where      string
+	WhereArgs  []interface{}
+	ObjModel   BaseModelInterface
+	UserData   interface{}
 }
 
 func (this *ListRawHelper) appendNormalWhereConds() {
@@ -99,7 +86,7 @@ func (this *ListRawHelper) appendNormalWhereConds() {
 		}
 
 		this.Where += " " + in_name + " in ? "
-		this.WhereArgs = append(this.WhereArgs, pg.In(in_values))
+		this.WhereArgs = append(this.WhereArgs, this.OrmAdapter.InArg(in_values))
 	}
 
 	for f := true; f; f = false {
@@ -155,12 +142,13 @@ func (this *ListRawHelper) getQueryPageablePostfix(sql string) string {
 		offset = (pageable.PageNumber - 1) * pageable.PageSize
 	}
 
-	switch this.SqlType {
-	case MySql:
-		sql = sql + fmt.Sprintf(" offset %d, %v", offset, pageable.PageSize)
-	default:
-		sql = sql + fmt.Sprintf(" limit %d offset %v", pageable.PageSize, offset)
-	}
+	s := this.OrmAdapter.LimitSqlStyle()
+	slimit := strconv.Itoa(pageable.PageSize)
+	soffset := strconv.Itoa(offset)
+	s = strings.Replace(s, "{limit}", slimit, -1)
+	s = strings.Replace(s, "{offset}", soffset, -1)
+
+	sql = sql + " " + s
 
 	return sql
 }
@@ -256,7 +244,7 @@ func (this *ListRawHelper) SelSqlListQuery(selSql string, resultListPointer inte
 		sql += " WHERE " + this.Where
 	}
 
-	_, e = this.Db.QueryOne(pg.Scan(&total), sql, this.WhereArgs...)
+	e = this.OrmAdapter.QueryOneBySql(&total, sql, this.WhereArgs...)
 	if e != nil {
 		return
 	}
@@ -283,7 +271,7 @@ func (this *ListRawHelper) SelSqlListQuery(selSql string, resultListPointer inte
 
 	sql = this.getQueryPageablePostfix(sql)
 
-	_, e = this.Db.Query(resultListPointer, sql, this.WhereArgs...)
+	e = this.OrmAdapter.QueryBySql(resultListPointer, sql, this.WhereArgs...)
 
 	return
 

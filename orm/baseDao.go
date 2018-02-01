@@ -1,4 +1,4 @@
-package pqsql
+package orm
 
 import (
 	"errors"
@@ -6,10 +6,6 @@ import (
 
 	"github.com/pkrss/go-utils/beans"
 
-	"github.com/go-pg/pg"
-	"github.com/go-pg/pg/orm"
-
-	"github.com/go-pg/pg/types"
 	pkReflect "github.com/pkrss/go-utils/reflect"
 )
 
@@ -18,7 +14,7 @@ type BaseDaoInterface interface {
 	// create type is: *[]BaseModel
 	CreateModelSlice(len int, cap int) interface{}
 	FindOneById(id interface{}) (BaseModelInterface, error)
-	FindOneByFilter(col string, val interface{}, selCols ...string) (BaseModelInterface, error)
+	FindOneByFilter(col string, val interface{}, structColsParams ...[]string) (BaseModelInterface, error)
 	UpdateByFilter(ob BaseModelInterface, col string, val interface{}, structColsParams ...[]string) error
 	UpdateById(ob BaseModelInterface, id interface{}, structColsParams ...[]string) error
 	Insert(ob BaseModelInterface, structColsParams ...[]string) error
@@ -28,12 +24,12 @@ type BaseDaoInterface interface {
 }
 
 type BaseDao struct {
-	ObjModel BaseModelInterface
-	ObjType  reflect.Type
-	Db       *pg.DB
+	ObjModel   BaseModelInterface
+	ObjType    reflect.Type
+	OrmAdapter OrmAdapterInterface
 }
 
-func CreateBaseDao(v BaseModelInterface) (dao BaseDaoInterface) {
+func CreateBaseDao(v BaseModelInterface, ormAdapters ...OrmAdapterInterface) (dao BaseDaoInterface) {
 	val := reflect.ValueOf(v)
 	switch val.Kind() {
 	case reflect.Ptr:
@@ -43,8 +39,15 @@ func CreateBaseDao(v BaseModelInterface) (dao BaseDaoInterface) {
 	ret.ObjModel = v
 	ret.ObjType = reflect.TypeOf(val.Interface())
 
-	dbTable := orm.Tables.Get(ret.ObjType)
-	dbTable.Name = types.Q(v.TableName())
+	var ormAdapter OrmAdapterInterface
+	if len(ormAdapters) > 0 {
+		ormAdapter = ormAdapters[0]
+	} else {
+		ormAdapter = DefaultOrmAdapter
+	}
+	ret.OrmAdapter = ormAdapter
+
+	ormAdapter.RegModel(v)
 
 	return &ret
 }
@@ -64,41 +67,26 @@ func (this *BaseDao) CreateModelSlice(len int, cap int) interface{} {
 	return x.Elem().Addr().Interface().(interface{})
 }
 
-func (this *BaseDao) GetDb() (*pg.DB, error) {
-	db := this.Db
-	if db == nil {
-		db = Db
-	}
-	if db == nil {
-		return nil, errors.New("db is nil")
-	}
-	return db, nil
-}
-
 func (this *BaseDao) FindOneById(id interface{}) (BaseModelInterface, error) {
 	return this.FindOneByFilter(this.ObjModel.IdColumn(), id)
 }
 
-func (this *BaseDao) FindOneByFilter(col string, val interface{}, selCols ...string) (BaseModelInterface, error) {
-
-	db, err := this.GetDb()
-	if err != nil {
-		return nil, err
-	}
+func (this *BaseDao) FindOneByFilter(col string, val interface{}, structColsParams ...[]string) (BaseModelInterface, error) {
 
 	obj := this.CreateModelObject()
 
 	selSql := this.ObjModel.SelSql()
+
+	var selCols []string
+	if len(structColsParams) > 0 {
+		selCols = pkReflect.GetStructFieldNames(obj, structColsParams...)
+	}
+
+	var err error
 	if selSql == "" {
-
-		models := db.Model(obj).Where(col+" = ?", val)
-		if len(selCols) > 0 {
-			models = models.Column(selCols...)
-		}
-
-		err = models.Select(obj)
+		err = this.OrmAdapter.FindOneByCond(obj, col+" = ?", []interface{}{val}, selCols)
 	} else {
-		_, err = db.QueryOne(obj, selSql+" WHERE "+col+" = ?", val)
+		err = this.OrmAdapter.FindOneBySql(obj, selSql+" WHERE "+col+" = ?", val)
 	}
 
 	if err != nil {
@@ -111,23 +99,12 @@ func (this *BaseDao) FindOneByFilter(col string, val interface{}, selCols ...str
 }
 
 func (this *BaseDao) UpdateByFilter(ob BaseModelInterface, col string, val interface{}, structColsParams ...[]string) error {
-	db, err := this.GetDb()
-	if err != nil {
-		return err
+	var selCols []string
+	if len(structColsParams) > 0 {
+		selCols = pkReflect.GetStructFieldNames(ob, structColsParams...)
 	}
 
-	models := db.Model(ob).Where(col+" = ?", val)
-	selCols := pkReflect.GetStructFieldNames(ob, structColsParams...)
-	if len(selCols) > 0 {
-		models = models.Column(selCols...)
-	}
-
-	_, err = models.Update(ob)
-	if err != nil {
-		return err
-	}
-
-	return err
+	return this.OrmAdapter.UpdateByCond(ob, col+" = ?", []interface{}{val}, selCols)
 }
 
 func (this *BaseDao) DeleteOneById(id interface{}) error {
@@ -135,16 +112,7 @@ func (this *BaseDao) DeleteOneById(id interface{}) error {
 }
 
 func (this *BaseDao) DeleteByFilter(col string, val interface{}) error {
-	db, err := this.GetDb()
-	if err != nil {
-		return err
-	}
-
-	models := db.Model(this.ObjModel).Where(col+" = ?", val)
-
-	_, err = models.Delete()
-
-	return err
+	return this.OrmAdapter.DeleteByCond(this.ObjModel, col+" = ?", val)
 }
 
 func (this *BaseDao) UpdateById(ob BaseModelInterface, id interface{}, structColsParams ...[]string) error {
@@ -152,23 +120,12 @@ func (this *BaseDao) UpdateById(ob BaseModelInterface, id interface{}, structCol
 }
 
 func (this *BaseDao) Insert(ob BaseModelInterface, structColsParams ...[]string) error {
-	db, err := this.GetDb()
-	if err != nil {
-		return err
+	var selCols []string
+	if len(structColsParams) > 0 {
+		selCols = pkReflect.GetStructFieldNames(ob, structColsParams...)
 	}
 
-	models := db.Model(ob)
-	selCols := pkReflect.GetStructFieldNames(ob, structColsParams...)
-	if len(selCols) > 0 {
-		models = models.Column(selCols...)
-	}
-
-	_, err = models.Insert(ob)
-	if err != nil {
-		return err
-	}
-
-	return err
+	return this.OrmAdapter.Insert(ob, selCols...)
 }
 
 type SelectListCallback func(listRawHelper *ListRawHelper)
@@ -181,17 +138,12 @@ func (this *BaseDao) SelectSelSqlList(partSql string, pageable *beans.Pageable, 
 	}
 
 	resultListPointer = this.CreateModelSlice(0, 0)
-	db, err := this.GetDb()
-	if err != nil {
-		e = err
-		return
-	}
 
 	listRawHelper := ListRawHelper{}
 	listRawHelper.Pageable = pageable
 	listRawHelper.WhereArgs = make([]interface{}, 0)
 	listRawHelper.ObjModel = this.ObjModel
-	listRawHelper.Db = db
+	listRawHelper.OrmAdapter = this.OrmAdapter
 	listRawHelper.UserData = userData
 
 	if cb != nil {

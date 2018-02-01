@@ -4,26 +4,27 @@ import (
 	"log"
 
 	"github.com/pkrss/go-utils/beans"
-	baseOrm "github.com/pkrss/go-utils/pqsql/custom"
+	baseOrm "github.com/pkrss/go-utils/orm"
+	baseOrmCustom "github.com/pkrss/go-utils/orm/custom"
 
-	pqsql "github.com/pkrss/go-utils/pqsql"
+	pqsql "github.com/pkrss/go-utils/orm/pqsql"
 )
 
 type OAuthApp struct {
-	pqsql.BaseModel
-	Id                    int              `json:"id"`
-	Code                  string           `json:"code"`
-	Title                 string           `json:"title"`
-	AppId                 string           `json:"appId"`
-	AppSecurityKey        string           `json:"appSecurityKey"`
-	AppOauthScope         string           `json:"appOauthScope"`
-	AppBaseUrl            string           `json:"appBaseUrl"`
-	AccessToken           string           `json:"accessToken"`
-	AccessTokenExpireTime baseOrm.JsonTime `json:"accessTokenExpireTime"`
-	CreateTime            baseOrm.JsonTime `json:"createTime"`
+	baseOrm.BaseModel
+	Id                    int                    `json:"id"`
+	Code                  string                 `json:"code"`
+	Title                 string                 `json:"title"`
+	AppId                 string                 `json:"appId"`
+	AppSecurityKey        string                 `json:"appSecurityKey"`
+	AppOauthScope         string                 `json:"appOauthScope"`
+	AppBaseUrl            string                 `json:"appBaseUrl"`
+	AccessToken           string                 `json:"accessToken"`
+	AccessTokenExpireTime baseOrmCustom.JsonTime `json:"accessTokenExpireTime"`
+	CreateTime            baseOrmCustom.JsonTime `json:"createTime"`
 }
 
-var dao pqsql.BaseDaoInterface
+var dao baseOrm.BaseDaoInterface
 
 func (this *OAuthApp) TableName() string {
 	return "myzc_oauth_app"
@@ -52,7 +53,7 @@ func testFindList() {
 	pageable.CondArr = make(map[string]string, 0)
 	pageable.CondArr["q"] = "WX"
 
-	l, total, e := dao.SelectSelSqlList("", &pageable, nil, func(listRawHelper *pqsql.ListRawHelper) {
+	l, total, e := dao.SelectSelSqlList("", &pageable, nil, func(listRawHelper *baseOrm.ListRawHelper) {
 		listRawHelper.SetCondArrLike("q", "title", "code")
 	})
 	if e != nil {
@@ -63,9 +64,10 @@ func testFindList() {
 
 func main() {
 	pqsql.Db = pqsql.CreatePgSql()
+	baseOrm.DefaultOrmAdapter = &pqsql.PgSqlAdapter{}
 
 	var oAuthApp OAuthApp
-	dao = pqsql.CreateBaseDao(&oAuthApp)
+	dao = baseOrm.CreateBaseDao(&oAuthApp)
 
 	// testMakeSlice()
 	// testFindOne()
