@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkrss/go-utils/mvc/controllers"
 	"github.com/pkrss/go-utils/orm"
+	pkReflect "github.com/pkrss/go-utils/reflect"
 )
 
 type OpType int
@@ -219,6 +220,7 @@ func (this *SimpleAuthRestHelper) OnPut(k string, t reflect.Kind, structColsPara
 	}
 
 	if OnRestDbCbFun != nil {
+		pkReflect.SetStructFieldValue(ob, ob.IdColumn(), id)
 		e := OnRestDbCbFun(BeforePut, ob, this.Dao, this.C)
 		if e != nil {
 			this.AjaxError(err.Error())
@@ -271,6 +273,7 @@ func (this *SimpleAuthRestHelper) OnDelete(k string, t reflect.Kind) {
 	}
 
 	if OnRestDbCbFun != nil {
+		pkReflect.SetStructFieldValue(ob, ob.IdColumn(), id)
 		e := OnRestDbCbFun(BeforeDelete, ob, this.Dao, this.C)
 		if e != nil {
 			this.AjaxError(err.Error())

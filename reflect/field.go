@@ -8,19 +8,37 @@ import (
 )
 
 func GetStructFieldToString(ob interface{}, field string, caseSensitive ...bool) string {
-	v := GetStructField(ob, field, caseSensitive...)
+	v := GetStructFieldValue(ob, field, caseSensitive...)
 	return types.GetValueString(v)
 }
 
-func GetStructField(v interface{}, field string, caseSensitive ...bool) interface{} {
+func GetStructFieldValue(v interface{}, field string, caseSensitive ...bool) interface{} {
+
+	val := GetStructField(v, field, caseSensitive...)
+	if !val.IsValid() || val.IsNil() {
+		return nil
+	}
+	return val.Interface()
+}
+
+func GetStructFieldValueSimple(v interface{}, field string, caseSensitive bool) interface{} {
+
+	val := GetStructFieldSimple(v, field, caseSensitive)
+	if !val.IsValid() || val.IsNil() {
+		return nil
+	}
+	return val.Interface()
+}
+
+func GetStructField(v interface{}, field string, caseSensitive ...bool) reflect.Value {
 
 	if field == "" {
-		return nil
+		return reflect.Value{}
 	}
 
 	ks := strings.Split(field, ".")
 
-	ret := v
+	ret := reflect.ValueOf(v)
 
 	caseS := true
 	if len(caseSensitive) > 0 {
@@ -32,18 +50,22 @@ func GetStructField(v interface{}, field string, caseSensitive ...bool) interfac
 		k := ks[i]
 
 		ret = GetStructFieldSimple(ret, k, caseS)
-		if ret == nil {
+		if !ret.IsValid() || ret.IsNil() {
 			break
+		}
+
+		if i == c-1 {
+			return ret
 		}
 	}
 
-	return ret
+	return reflect.Value{}
 }
 
-func GetStructFieldSimple(v interface{}, field string, caseSensitive bool) interface{} {
+func GetStructFieldSimple(v interface{}, field string, caseSensitive bool) reflect.Value {
 
 	if v == nil || field == "" {
-		return nil
+		return reflect.Value{}
 	}
 
 	val := reflect.ValueOf(v)
@@ -56,7 +78,7 @@ func GetStructFieldSimple(v interface{}, field string, caseSensitive bool) inter
 	if caseSensitive {
 		v2 := val.FieldByName(field)
 		if v2.IsValid() {
-			return v2.Interface()
+			return v2
 		}
 	} else {
 		field = strings.ToLower(field)
@@ -66,14 +88,14 @@ func GetStructFieldSimple(v interface{}, field string, caseSensitive bool) inter
 			typeField := val.Type().Field(i)
 
 			if strings.ToLower(typeField.Name) == field {
-				return valueField.Interface()
+				return valueField
 			}
 
 			// tag := typeField.Tag
 			// fmt.Printf("Field Name: %s,\t Field Value: %v,\t Tag Value: %s\n", typeField.Name, valueField.Interface(), tag.Get("tag_name"))
 		}
 	}
-	return nil
+	return reflect.Value{}
 }
 
 func GetStructFieldNames(v interface{}, structColsParams ...[]string) (ret []string) {
@@ -222,4 +244,14 @@ func GetStructFieldInfoMap2(v interface{}, ret map[string]FieldInfo) map[string]
 		ret[s] = f
 	}
 	return ret
+}
+
+func SetStructFieldValue(obj interface{}, field string, v interface{}, caseSensitive ...bool) bool {
+	val := GetStructField(obj, field, caseSensitive...)
+	if val.IsNil() || !val.IsValid() || !val.CanSet() {
+		return false
+	}
+
+	val.Set(reflect.ValueOf(v))
+	return true
 }
