@@ -16,10 +16,10 @@ type BaseDaoInterface interface {
 
 	CreateModelSlice(len int, cap int) interface{} // create type is: *[]BaseModel
 	FindOneById(id interface{}) (BaseModelInterface, error)
-	FindOneByFilter(col string, val interface{}, structColsParams ...[]string) (BaseModelInterface, error)
-	UpdateByFilter(ob BaseModelInterface, col string, val interface{}, structColsParams ...[]string) error
-	UpdateById(ob BaseModelInterface, id interface{}, structColsParams ...[]string) error
-	Insert(ob BaseModelInterface, structColsParams ...[]string) error
+	FindOneByFilter(col string, val interface{}, structColsParams ...*pkReflect.StructSelCols) (BaseModelInterface, error)
+	UpdateByFilter(ob BaseModelInterface, col string, val interface{}, structColsParams ...*pkReflect.StructSelCols) error
+	UpdateById(ob BaseModelInterface, id interface{}, structColsParams ...*pkReflect.StructSelCols) error
+	Insert(ob BaseModelInterface, structColsParams ...*pkReflect.StructSelCols) error
 	SelectSelSqlList(partSql string, pageable *beans.Pageable, userData interface{}, cb SelectListCallback) (resultListPointer interface{}, total int64, e error)
 	DeleteOneById(id interface{}) error
 	DeleteByFilter(col string, val interface{}) error
@@ -73,7 +73,7 @@ func (this *BaseDao) FindOneById(id interface{}) (BaseModelInterface, error) {
 	return this.FindOneByFilter(this.ObjModel.IdColumn(), id)
 }
 
-func (this *BaseDao) FindOneByFilter(col string, val interface{}, structColsParams ...[]string) (BaseModelInterface, error) {
+func (this *BaseDao) FindOneByFilter(col string, val interface{}, structColsParams ...*pkReflect.StructSelCols) (BaseModelInterface, error) {
 
 	obj := this.CreateModelObject()
 
@@ -115,7 +115,7 @@ func (this *BaseDao) FindOneByFilter(col string, val interface{}, structColsPara
 	return obj, err
 }
 
-func (this *BaseDao) UpdateByFilter(ob BaseModelInterface, col string, val interface{}, structColsParams ...[]string) error {
+func (this *BaseDao) UpdateByFilter(ob BaseModelInterface, col string, val interface{}, structColsParams ...*pkReflect.StructSelCols) error {
 	dbField2Values := getObDbFieldsAndValues(ob, structColsParams...)
 	c := len(dbField2Values)
 	if c == 0 {
@@ -145,10 +145,10 @@ func (this *BaseDao) DeleteByFilter(col string, val interface{}) error {
 	return this.OrmAdapter.ExecSql(sql, val)
 }
 
-func (this *BaseDao) UpdateById(ob BaseModelInterface, id interface{}, structColsParams ...[]string) error {
+func (this *BaseDao) UpdateById(ob BaseModelInterface, id interface{}, structColsParams ...*pkReflect.StructSelCols) error {
 	return this.UpdateByFilter(ob, ob.IdColumn(), id, structColsParams...)
 }
-func (this *BaseDao) Insert(ob BaseModelInterface, structColsParams ...[]string) error {
+func (this *BaseDao) Insert(ob BaseModelInterface, structColsParams ...*pkReflect.StructSelCols) error {
 
 	dbField2Values := getObDbFieldsAndValues(ob, structColsParams...)
 	c := len(dbField2Values)
@@ -165,21 +165,20 @@ func (this *BaseDao) Insert(ob BaseModelInterface, structColsParams ...[]string)
 
 	sql := "INSERT INTO " + ob.TableName() + " (" + strings.Join(keys, ",") + ") VALUES(" + strings.Join(t, ",") + ")"
 
-	if ob.IdColumn() != "" && ob.IdType() != nil {
+	if ob.IdColumn() != "" {
 
 		returnSql := this.OrmAdapter.SqlReturnSql()
+		idVal := pkReflect.GetStructField(ob, ob.IdColumn(), false)
 
-		if returnSql != "" {
+		if returnSql != "" && idVal.IsValid() {
 			returnSql = strings.Replace(returnSql, "{id}", ob.IdColumn(), -1)
 
 			sql += returnSql
 
-			idVal := reflect.New(ob.IdType())
-
 			e := this.OrmAdapter.QueryOneBySql(idVal.Addr().Interface(), sql, values...)
-			if e == nil {
-				pkReflect.SetStructFieldValue(ob, ob.IdColumn(), idVal.Interface())
-			}
+			// if e == nil {
+			// 	pkReflect.SetStructFieldValue(ob, ob.IdColumn(), idVal.Interface())
+			// }
 			return e
 
 		}

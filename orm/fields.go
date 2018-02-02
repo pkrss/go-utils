@@ -7,7 +7,12 @@ import (
 	pkStrings "github.com/pkrss/go-utils/strings"
 )
 
-func getObDbFieldsAndValues(ob interface{}, structColsParams ...[]string) map[string]interface{} {
+type StructColsStruct struct {
+	SelCols   []string
+	UnSelCols []string
+}
+
+func getObDbFieldsAndValues(ob interface{}, structColsParams ...*pkReflect.StructSelCols) map[string]interface{} {
 	selCols := pkReflect.GetStructFieldMap(ob, structColsParams...)
 	ret := make(map[string]interface{}, 0)
 	for k, v := range selCols {

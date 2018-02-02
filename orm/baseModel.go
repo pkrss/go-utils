@@ -1,11 +1,8 @@
 package orm
 
-import "reflect"
-
 type BaseModelInterface interface {
 	TableName() string
 	IdColumn() string
-	IdType() reflect.Type
 	FilterValue()
 	SelSql() string
 }
@@ -19,10 +16,6 @@ func (this *BaseModel) TableName() string {
 
 func (this *BaseModel) IdColumn() string {
 	return "id"
-}
-
-func (this *BaseModel) IdType() reflect.Type {
-	return nil
 }
 
 func (this *BaseModel) FilterValue() {

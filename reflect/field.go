@@ -7,6 +7,11 @@ import (
 	"github.com/pkrss/go-utils/types"
 )
 
+type StructSelCols struct {
+	IncludeCols []string
+	ExcludeCols []string
+}
+
 func GetStructFieldToString(ob interface{}, field string, caseSensitive ...bool) string {
 	v := GetStructFieldValue(ob, field, caseSensitive...)
 	return types.GetValueString(v)
@@ -98,7 +103,7 @@ func GetStructFieldSimple(v interface{}, field string, caseSensitive bool) refle
 	return reflect.Value{}
 }
 
-func GetStructFieldNames(v interface{}, structColsParams ...[]string) (ret []string) {
+func GetStructFieldNames(v interface{}, structColsParams ...*StructSelCols) (ret []string) {
 	n2v := GetStructFieldName2ValueMap(v, structColsParams...)
 	ret = make([]string, 0)
 	if n2v != nil {
@@ -109,7 +114,7 @@ func GetStructFieldNames(v interface{}, structColsParams ...[]string) (ret []str
 	return
 }
 
-func GetStructFieldName2ValueMap(v interface{}, structColsParams ...[]string) (ret map[string]interface{}) {
+func GetStructFieldName2ValueMap(v interface{}, structColsParams ...*StructSelCols) (ret map[string]interface{}) {
 	m := GetStructFieldMap(v, structColsParams...)
 	if m == nil {
 		return nil
@@ -121,11 +126,11 @@ func GetStructFieldName2ValueMap(v interface{}, structColsParams ...[]string) (r
 	return ret
 }
 
-func GetStructFieldMap(v interface{}, structColsParams ...[]string) (ret map[string]reflect.Value) {
+func GetStructFieldMap(v interface{}, structColsParams ...*StructSelCols) (ret map[string]reflect.Value) {
 	return GetStructFieldMap2(v, nil, structColsParams...)
 }
 
-func GetStructFieldMap2(v interface{}, ret map[string]reflect.Value, structColsParams ...[]string) map[string]reflect.Value {
+func GetStructFieldMap2(v interface{}, ret map[string]reflect.Value, structColsParams ...*StructSelCols) map[string]reflect.Value {
 
 	if v == nil {
 		return nil
@@ -144,11 +149,8 @@ func GetStructFieldMap2(v interface{}, ret map[string]reflect.Value, structColsP
 	var excludeCols []string
 
 	if len(structColsParams) > 1 {
-		excludeCols = structColsParams[1]
-	}
-
-	if len(structColsParams) > 0 {
-		cols = structColsParams[0]
+		cols = structColsParams[0].IncludeCols
+		excludeCols = structColsParams[0].ExcludeCols
 	}
 
 	c := val.NumField()
