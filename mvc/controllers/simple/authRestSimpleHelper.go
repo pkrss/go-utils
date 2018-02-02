@@ -81,7 +81,7 @@ func (this *SimpleAuthRestHelper) OnGetListWithPrivilege(requiredPrivilege inter
 	this.OnGetList(selSql, cb)
 }
 
-func (this *SimpleAuthRestHelper) OnPost(structColsParams ...[]string) {
+func (this *SimpleAuthRestHelper) OnPost(structColsParams ...*pkReflect.StructSelCols) {
 
 	ob := this.Dao.CreateModelObject()
 
@@ -118,7 +118,7 @@ func (this *SimpleAuthRestHelper) OnPost(structColsParams ...[]string) {
 	this.C.AjaxDbRecord(ob, this.OldCodeFormat)
 }
 
-func (this *SimpleAuthRestHelper) OnPostWithPrivilege(requiredPrivilege interface{}, structColsParams ...[]string) {
+func (this *SimpleAuthRestHelper) OnPostWithPrivilege(requiredPrivilege interface{}, structColsParams ...*pkReflect.StructSelCols) {
 	e := C.CheckUserPrivilege(requiredPrivilege)
 	if e != nil {
 		this.AjaxUnAuthorized(e.Error())
@@ -203,7 +203,7 @@ func (this *SimpleAuthRestHelper) OnGetOneWithPrivilege(requiredPrivilege interf
 	this.OnGetOne(k, t)
 }
 
-func (this *SimpleAuthRestHelper) OnPut(k string, t reflect.Kind, structColsParams ...[]string) {
+func (this *SimpleAuthRestHelper) OnPut(k string, t reflect.Kind, structColsParams ...*pkReflect.StructSelCols) {
 
 	id, e := this.GetIdParam(k, t)
 
@@ -247,7 +247,7 @@ func (this *SimpleAuthRestHelper) OnPut(k string, t reflect.Kind, structColsPara
 	this.C.AjaxDbRecord(ob, this.OldCodeFormat)
 }
 
-func (this *SimpleAuthRestHelper) OnPutWithPrivilege(requiredPrivilege interface{}, k string, t reflect.Kind, structColsParams ...[]string) {
+func (this *SimpleAuthRestHelper) OnPutWithPrivilege(requiredPrivilege interface{}, k string, t reflect.Kind, structColsParams ...*pkReflect.StructSelCols) {
 
 	e := C.CheckUserPrivilege(requiredPrivilege)
 	if e != nil {

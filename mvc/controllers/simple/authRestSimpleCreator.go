@@ -14,7 +14,7 @@ type SimpleAuthRestListCreateParams struct {
 	SelectPrivilege interface{}
 
 	PostPrivilege interface{}
-	PostStructColsParams ...[]string
+	PostStructColsParams ...*pkReflect.StructSelCols
 
 	OnRestDbCbFun OnRestDbCallback
 }
@@ -59,7 +59,7 @@ type SimpleAuthRestCreateParams struct {
 	IdType          reflect.Kind
 
 	PutPrivilege interface{}
-	PutStructColsParams ...[]string
+	PutStructColsParams ...*pkReflect.StructSelCols
 
 	DeletePrivilege interface{}
 	OnRestDbCbFun OnRestDbCallback
