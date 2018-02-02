@@ -1,20 +1,21 @@
 package simple
 
 import (
-	"hx98/base/constants"
+	"reflect"
 
 	"github.com/pkrss/go-utils/orm"
+	pkReflect "github.com/pkrss/go-utils/reflect"
 )
 
 type SimpleAuthRestListCreateParams struct {
-	RecordModel     orm.BaseModelInterface
+	RecordModel orm.BaseModelInterface
 
-	SelectListCbFun SelectListCallback
+	SelectListCbFun orm.SelectListCallback
 	SelectSql       string
 	SelectPrivilege interface{}
 
-	PostPrivilege interface{}
-	PostStructColsParams ...*pkReflect.StructSelCols
+	PostPrivilege        interface{}
+	PostStructColsParams *pkReflect.StructSelCols
 
 	OnRestDbCbFun OnRestDbCallback
 }
@@ -33,16 +34,16 @@ func (this *SimpleAuthRestListCreateController) OnPrepare() {
 func (this *SimpleAuthRestListCreateController) Get() {
 	if this.Params.SelectPrivilege != nil {
 		this.SimpleAuthRestController.Helper.OnGetListWithPrivilege(this.Params.SelectPrivilege, this.Params.SelectSql, this.Params.SelectListCbFun)
-	}else{
+	} else {
 		this.SimpleAuthRestController.Helper.OnGetList(this.Params.SelectSql, this.Params.SelectListCbFun)
 	}
 }
 
 func (this *SimpleAuthRestListCreateController) Post() {
 	if this.Params.PostPrivilege != nil {
-		this.SimpleAuthRestController.Helper.OnPostWithPrivilege(this.Params.PostPrivilege, this.Params.PostStructColsParams...)
-	}else{
-		this.SimpleAuthRestController.Helper.OnPost(constants.EClientAccount, this.Params.PostStructColsParams...)
+		this.SimpleAuthRestController.Helper.OnPostWithPrivilege(this.Params.PostPrivilege, this.Params.PostStructColsParams)
+	} else {
+		this.SimpleAuthRestController.Helper.OnPost(this.Params.PostStructColsParams)
 	}
 }
 
@@ -50,23 +51,22 @@ func CreateSimpleListRestController(params *SimpleAuthRestListCreateParams) *Sim
 	return &SimpleAuthRestListCreateController{Params: params}
 }
 
-
 type SimpleAuthRestCreateParams struct {
-	RecordModel     orm.BaseModelInterface
+	RecordModel orm.BaseModelInterface
 
 	SelectPrivilege interface{}
 	IdUrlParam      string
 	IdType          reflect.Kind
 
-	PutPrivilege interface{}
-	PutStructColsParams ...*pkReflect.StructSelCols
+	PutPrivilege        interface{}
+	PutStructColsParams *pkReflect.StructSelCols
 
 	DeletePrivilege interface{}
-	OnRestDbCbFun OnRestDbCallback
+	OnRestDbCbFun   OnRestDbCallback
 }
 
 type SimpleAuthRestCreateController struct {
-	base.SimpleAuthRestController
+	SimpleAuthRestController
 	Params *SimpleAuthRestCreateParams
 }
 
@@ -75,19 +75,19 @@ func (this *SimpleAuthRestCreateController) OnPrepare() {
 	this.SimpleAuthRestController.OnPrepare()
 }
 
-func (this *SimpleAuthRestCreateController) Get() {	
+func (this *SimpleAuthRestCreateController) Get() {
 	if this.Params.SelectPrivilege != nil {
 		this.SimpleAuthRestController.Helper.OnGetOneWithPrivilege(this.Params.SelectPrivilege, this.Params.IdUrlParam, this.Params.IdType)
-	}else{
+	} else {
 		this.SimpleAuthRestController.Helper.OnGetOne(this.Params.IdUrlParam, this.Params.IdType)
 	}
 }
 
 func (this *SimpleAuthRestCreateController) Put() {
 	if this.Params.PutPrivilege != nil {
-		this.SimpleAuthRestController.Helper.OnPutWithPrivilege(this.Params.PutPrivilege, this.Params.IdUrlParam, this.Params.IdType, this.PutStructColsParams...)
-	}else{
-		this.SimpleAuthRestController.Helper.OnPut(this.Params.IdUrlParam, this.Params.IdType, this.PutStructColsParams...)
+		this.SimpleAuthRestController.Helper.OnPutWithPrivilege(this.Params.PutPrivilege, this.Params.IdUrlParam, this.Params.IdType, this.Params.PutStructColsParams)
+	} else {
+		this.SimpleAuthRestController.Helper.OnPut(this.Params.IdUrlParam, this.Params.IdType, this.Params.PutStructColsParams)
 	}
 }
 
@@ -98,12 +98,11 @@ func (this *SimpleAuthRestCreateController) Patch() {
 func (this *SimpleAuthRestCreateController) Delete() {
 	if this.Params.DeletePrivilege != nil {
 		this.SimpleAuthRestController.Helper.OnDeleteWithPrivilege(this.Params.DeletePrivilege, this.Params.IdUrlParam, this.Params.IdType)
-	}else{
+	} else {
 		this.SimpleAuthRestController.Helper.OnDelete(this.Params.IdUrlParam, this.Params.IdType)
 	}
 }
 
 func CreateSimpleRestController(params *SimpleAuthRestCreateParams) *SimpleAuthRestCreateController {
-	return SimpleAuthRestCreateController{Params: params}
+	return &SimpleAuthRestCreateController{Params: params}
 }
-

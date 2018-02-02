@@ -52,8 +52,8 @@ func (this *SimpleAuthController) CheckUserIsClientManagerOrSelf(targetUserId in
 		return errors.New("User is not logined")
 	}
 
-	if u.IsClientManagerOrSelf(userContext, targetUserId) {
-		return true
+	if u.IsManagerOrSelf(userContext, targetUserId) {
+		return nil
 	}
 
 	return errors.New("User is not authorized with manager and not self")

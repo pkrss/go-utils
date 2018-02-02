@@ -1,13 +1,14 @@
 package simple
 
 import (
+	"github.com/pkrss/go-utils/mvc/controllers"
 	"github.com/pkrss/go-utils/orm"
 )
 
 type SimpleAuthRestController struct {
 	SimpleAuthController
 	Model  orm.BaseModelInterface
-	Helper SimpleAuthRestHelper
+	Helper *SimpleAuthRestHelper
 }
 
 func (this *SimpleAuthRestController) OnPrepare() {
@@ -19,12 +20,12 @@ func (this *SimpleAuthRestController) OnLeave() {
 	this.Model = nil
 }
 
-func (this *SimpleAuthRestController) CloneAttribute(src ControllerInterface) {
+func (this *SimpleAuthRestController) CloneAttribute(src controllers.ControllerInterface) {
 	this.SimpleAuthController.CloneAttribute(src)
 	if src == nil {
 		return
 	}
-	s := src.(SimpleAuthRestController)
+	s := src.(*SimpleAuthRestController)
 	if s != nil {
 		this.Model = s.Model
 		this.Helper = s.Helper

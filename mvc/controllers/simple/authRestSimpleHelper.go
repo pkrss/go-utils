@@ -31,50 +31,54 @@ type OnRestDbCallback func(op OpType, ob interface{}, dao orm.BaseDaoInterface, 
 
 type SimpleAuthRestHelper struct {
 	Dao           orm.BaseDaoInterface
-	C             SimpleAuthController
+	C             *SimpleAuthRestController
 	OnRestDbCbFun OnRestDbCallback
 	OldCodeFormat bool
 }
 
-func CreateSimpleAuthRestHelper(c SimpleAuthUserInterface, v pqsql.BaseModelInterface) (ret SimpleAuthRestHelper) {
+func CreateSimpleAuthRestHelper(c *SimpleAuthRestController, v orm.BaseModelInterface) (ret *SimpleAuthRestHelper) {
 	d := orm.CreateBaseDao(v)
-	ret = SimpleAuthRestHelper{C: c, Dao: d}
+	ret = &SimpleAuthRestHelper{C: c, Dao: d}
 	return
 }
 
-func (this *SimpleAuthRestHelper) OnGetList(l *[]BaseModelInterface, selSql string, cb SelectListCallback) {
+func (this *SimpleAuthRestHelper) OnGetList(selSql string, cb orm.SelectListCallback) {
 
-	pageable := this.GetPageableFromRequest()
+	pageable := this.C.GetPageableFromRequest()
 
-	if OnRestDbCbFun != nil {
-		e := OnRestDbCbFun(BeforeGetList, nil, this.Dao, this.C)
+	if this.OnRestDbCbFun != nil {
+		e := this.OnRestDbCbFun(BeforeGetList, nil, this.Dao, this.C)
 		if e != nil {
-			this.AjaxError(err.Error())
+			this.C.AjaxError(e.Error())
 			return
 		}
 	}
 
-	l, total, err := this.Dao.SelectSelSqlList(selSql, &pageable, this.C, cb)
+	l, total, err := this.Dao.SelectSelSqlList(selSql, pageable, this.C, cb)
 	if err != nil {
-		this.AjaxError(err.Error())
+		this.C.AjaxError(err.Error())
 		return
 	}
 
-	if err == nil && OnRestDbCbFun != nil {
-		e := OnRestDbCbFun(AfterGetList, l, this.Dao, this.C)
+	if err == nil && this.OnRestDbCbFun != nil {
+		e := this.OnRestDbCbFun(AfterGetList, l, this.Dao, this.C)
 		if e != nil {
-			this.AjaxError(err.Error())
+			this.C.AjaxError(err.Error())
 			return
 		}
 	}
 
-	this.C.AjaxDbList(pageable, l, len(l), total, this.OldCodeFormat)
+	c := 0
+	if l != nil {
+		c = reflect.ValueOf(l).Len()
+	}
+	this.C.AjaxDbList(pageable, l, c, total, this.OldCodeFormat)
 }
 
-func (this *SimpleAuthRestHelper) OnGetListWithPrivilege(requiredPrivilege interface{}, selSql string, cb SelectListCallback) {
-	e := C.CheckUserPrivilege(requiredPrivilege)
+func (this *SimpleAuthRestHelper) OnGetListWithPrivilege(requiredPrivilege interface{}, selSql string, cb orm.SelectListCallback) {
+	e := this.C.CheckUserPrivilege(requiredPrivilege)
 	if e != nil {
-		this.AjaxUnAuthorized(e.Error())
+		this.C.AjaxError(e.Error())
 		return
 	}
 
@@ -85,33 +89,33 @@ func (this *SimpleAuthRestHelper) OnPost(structColsParams ...*pkReflect.StructSe
 
 	ob := this.Dao.CreateModelObject()
 
-	e := this.RequestBodyToJsonObject(ob)
+	e := this.C.RequestBodyToJsonObject(ob)
 
 	if e != nil {
-		this.C.AjaxError(e)
+		this.C.AjaxError(e.Error())
 		return
 	}
 
-	if OnRestDbCbFun != nil {
-		e := OnRestDbCbFun(BeforePost, ob, this.Dao, this.C)
+	if this.OnRestDbCbFun != nil {
+		e := this.OnRestDbCbFun(BeforePost, ob, this.Dao, this.C)
 		if e != nil {
-			this.AjaxError(err.Error())
+			this.C.AjaxError(e.Error())
 			return
 		}
 	}
 
 	err := this.Dao.Insert(ob, structColsParams...)
 
-	if err == nil && OnRestDbCbFun != nil {
-		e := OnRestDbCbFun(AfterPost, ob, this.Dao, this.C)
+	if err == nil && this.OnRestDbCbFun != nil {
+		e := this.OnRestDbCbFun(AfterPost, ob, this.Dao, this.C)
 		if e != nil {
-			this.AjaxError(err.Error())
+			this.C.AjaxError(err.Error())
 			return
 		}
 	}
 
 	if err != nil {
-		this.AjaxError(err.Error())
+		this.C.AjaxError(err.Error())
 		return
 	}
 
@@ -119,9 +123,9 @@ func (this *SimpleAuthRestHelper) OnPost(structColsParams ...*pkReflect.StructSe
 }
 
 func (this *SimpleAuthRestHelper) OnPostWithPrivilege(requiredPrivilege interface{}, structColsParams ...*pkReflect.StructSelCols) {
-	e := C.CheckUserPrivilege(requiredPrivilege)
+	e := this.C.CheckUserPrivilege(requiredPrivilege)
 	if e != nil {
-		this.AjaxUnAuthorized(e.Error())
+		this.C.AjaxError(e.Error())
 		return
 	}
 
@@ -162,24 +166,24 @@ func (this *SimpleAuthRestHelper) OnGetOne(k string, t reflect.Kind) {
 	id, e := this.GetIdParam(k, t)
 
 	if e != nil {
-		this.C.AjaxError(e)
+		this.C.AjaxError(e.Error())
 		return
 	}
 
-	if OnRestDbCbFun != nil {
-		e := OnRestDbCbFun(BeforeGet, nil, this.Dao, this.C)
+	if this.OnRestDbCbFun != nil {
+		e := this.OnRestDbCbFun(BeforeGet, nil, this.Dao, this.C)
 		if e != nil {
-			this.AjaxError(err.Error())
+			this.C.AjaxError(e.Error())
 			return
 		}
 	}
 
 	ob, err := this.Dao.FindOneById(id)
 
-	if err == nil && OnRestDbCbFun != nil {
-		e := OnRestDbCbFun(AfterGet, ob, this.Dao, this.C)
+	if err == nil && this.OnRestDbCbFun != nil {
+		e := this.OnRestDbCbFun(AfterGet, ob, this.Dao, this.C)
 		if e != nil {
-			this.AjaxError(err.Error())
+			this.C.AjaxError(e.Error())
 			return
 		}
 	}
@@ -194,9 +198,9 @@ func (this *SimpleAuthRestHelper) OnGetOne(k string, t reflect.Kind) {
 
 func (this *SimpleAuthRestHelper) OnGetOneWithPrivilege(requiredPrivilege interface{}, k string, t reflect.Kind) {
 
-	e := C.CheckUserPrivilege(requiredPrivilege)
+	e := this.C.CheckUserPrivilege(requiredPrivilege)
 	if e != nil {
-		this.AjaxUnAuthorized(e.Error())
+		this.C.AjaxError(e.Error())
 		return
 	}
 
@@ -208,33 +212,33 @@ func (this *SimpleAuthRestHelper) OnPut(k string, t reflect.Kind, structColsPara
 	id, e := this.GetIdParam(k, t)
 
 	if e != nil {
-		this.C.AjaxError(e)
+		this.C.AjaxError(e.Error())
 		return
 	}
 
 	ob := this.Dao.CreateModelObject()
 
-	e = this.RequestBodyToJsonObject(ob)
+	e = this.C.RequestBodyToJsonObject(ob)
 	if e != nil {
-		this.C.AjaxError(e)
+		this.C.AjaxError(e.Error())
 		return
 	}
 
-	if OnRestDbCbFun != nil {
+	if this.OnRestDbCbFun != nil {
 		pkReflect.SetStructFieldValue(ob, ob.IdColumn(), id)
-		e := OnRestDbCbFun(BeforePut, ob, this.Dao, this.C)
+		e := this.OnRestDbCbFun(BeforePut, ob, this.Dao, this.C)
 		if e != nil {
-			this.AjaxError(err.Error())
+			this.C.AjaxError(e.Error())
 			return
 		}
 	}
 
 	err := this.Dao.UpdateById(ob, id, structColsParams...)
 
-	if err == nil && OnRestDbCbFun != nil {
-		e := OnRestDbCbFun(AfterPut, ob, this.Dao, this.C)
+	if err == nil && this.OnRestDbCbFun != nil {
+		e := this.OnRestDbCbFun(AfterPut, ob, this.Dao, this.C)
 		if e != nil {
-			this.AjaxError(err.Error())
+			this.C.AjaxError(e.Error())
 			return
 		}
 	}
@@ -249,9 +253,9 @@ func (this *SimpleAuthRestHelper) OnPut(k string, t reflect.Kind, structColsPara
 
 func (this *SimpleAuthRestHelper) OnPutWithPrivilege(requiredPrivilege interface{}, k string, t reflect.Kind, structColsParams ...*pkReflect.StructSelCols) {
 
-	e := C.CheckUserPrivilege(requiredPrivilege)
+	e := this.C.CheckUserPrivilege(requiredPrivilege)
 	if e != nil {
-		this.AjaxUnAuthorized(e.Error())
+		this.C.AjaxUnAuthorized(e.Error())
 		return
 	}
 
@@ -263,7 +267,7 @@ func (this *SimpleAuthRestHelper) OnDelete(k string, t reflect.Kind) {
 	id, e := this.GetIdParam(k, t)
 
 	if e != nil {
-		this.C.AjaxError(e)
+		this.C.AjaxError(e.Error())
 		return
 	}
 
@@ -273,21 +277,21 @@ func (this *SimpleAuthRestHelper) OnDelete(k string, t reflect.Kind) {
 		return
 	}
 
-	if OnRestDbCbFun != nil {
+	if this.OnRestDbCbFun != nil {
 		pkReflect.SetStructFieldValue(ob, ob.IdColumn(), id)
-		e := OnRestDbCbFun(BeforeDelete, ob, this.Dao, this.C)
+		e := this.OnRestDbCbFun(BeforeDelete, ob, this.Dao, this.C)
 		if e != nil {
-			this.AjaxError(err.Error())
+			this.C.AjaxError(err.Error())
 			return
 		}
 	}
 
-	err := this.Dao.DeleteOneById(id)
+	err = this.Dao.DeleteOneById(id)
 
-	if OnRestDbCbFun != nil {
-		e := OnRestDbCbFun(AfterDelete, ob, this.Dao, this.C)
+	if this.OnRestDbCbFun != nil {
+		e := this.OnRestDbCbFun(AfterDelete, ob, this.Dao, this.C)
 		if e != nil {
-			this.AjaxError(err.Error())
+			this.C.AjaxError(e.Error())
 			return
 		}
 	}
@@ -302,9 +306,9 @@ func (this *SimpleAuthRestHelper) OnDelete(k string, t reflect.Kind) {
 
 func (this *SimpleAuthRestHelper) OnDeleteWithPrivilege(requiredPrivilege interface{}, k string, t reflect.Kind) {
 
-	e := C.CheckUserPrivilege(requiredPrivilege)
+	e := this.C.CheckUserPrivilege(requiredPrivilege)
 	if e != nil {
-		this.AjaxUnAuthorized(e.Error())
+		this.C.AjaxError(e.Error())
 		return
 	}
 

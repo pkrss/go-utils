@@ -1,17 +1,13 @@
 package controllers
 
-import (
-	"log"
-
-	"github.com/pkrss/go-utils/redis"
-)
-
 ///////////////////////////////////////////////////////////
 
 type ControllerUserInterface interface {
 	TokenKey() string
 	LoadTokenObj(token string) interface{}
 	SaveTokenObj(token string, obj interface{})
+	CheckUserPrivilege(userContext interface{}, requiredPrivilege interface{}) bool
+	IsClientManagerOrSelf(userContext interface{}, targetUserId interface{}) bool
 }
 
 var DefaultUserInterface ControllerUserInterface
@@ -105,29 +101,37 @@ func (this *AuthController) LoadUserContext() interface{} {
 }
 
 //登录状态验证
-func (this *BaseController) CheckUserPrivilege(requiredPrivilege int) bool {
+func (this *AuthController) CheckUserPrivilege(requiredPrivilege int) bool {
 	userContext := this.LoadUserContext()
 
-	if hxToken.CheckUserPrivilege(userContext, requiredPrivilege) {
+	if DefaultUserInterface == nil {
+		return false
+	}
+
+	if DefaultUserInterface.CheckUserPrivilege(userContext, requiredPrivilege) {
 		return true
 	}
 
-	log.Printf("401 token=%s userContext=%v str=%s \n", this.token, userContext, redis.GetCache(hxToken.CACHE_PREFIX+this.token))
+	// log.Printf("401 token=%s userContext=%v str=%s \n", this.token, userContext, redis.GetCache(hxToken.CACHE_PREFIX+this.token))
 
-	this.Abort("401")
+	// this.Abort("401")
 
 	return false
 }
-func (this *BaseController) CheckUserIsClientManagerOrSelf(targetUserId string) bool {
+func (this *AuthController) CheckUserIsClientManagerOrSelf(targetUserId string) bool {
 	userContext := this.LoadUserContext()
 
-	if hxToken.IsClientManagerOrSelf(userContext, targetUserId) {
+	if DefaultUserInterface == nil {
+		return false
+	}
+
+	if DefaultUserInterface.IsClientManagerOrSelf(userContext, targetUserId) {
 		return true
 	}
 
-	log.Printf("401 token=%s userContext=%v str=%s \n", this.token, userContext, redis.GetCache(hxToken.CACHE_PREFIX+this.token))
+	// log.Printf("401 token=%s userContext=%v str=%s \n", this.token, userContext, redis.GetCache(hxToken.CACHE_PREFIX+this.token))
 
-	this.Abort("401")
+	// this.Abort("401")
 
 	return false
 }

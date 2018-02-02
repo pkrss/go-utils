@@ -90,8 +90,6 @@ func (this *Controller) GetResponseWriter() http.ResponseWriter {
 	return this.W
 }
 func (this *Controller) GetRequest() *http.Request {
-	decoder := json.NewDecoder(this.R.Body)
-	err := decoder.Decode(&t)
 	return this.R
 }
 func (this *Controller) RequestBodyToJsonObject(ob interface{}) error {
@@ -153,11 +151,13 @@ func (this *Controller) SetCookieValue(key string, val string, maxAgeSecondss ..
 		}
 		return
 	}
+
 	maxAgeSecond := 0
 	if len(maxAgeSecondss) > 0 {
 		maxAgeSecond = maxAgeSecondss[0]
 	}
-	expiration := time.Now().Add(maxAgeSecond * time.Second)
+	d := maxAgeSecond * int(time.Second)
+	expiration := time.Now().Add(time.Duration(d))
 	cookie := http.Cookie{Name: key, Value: val, Path: "/", Expires: expiration, MaxAge: maxAgeSecond}
 	http.SetCookie(this.W, &cookie)
 }
