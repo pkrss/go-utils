@@ -1,7 +1,6 @@
 package simple
 
 import (
-	"encoding/json"
 	"errors"
 	"reflect"
 	"strconv"
@@ -85,7 +84,8 @@ func (this *SimpleAuthRestHelper) OnGetListWithPrivilege(requiredPrivilege inter
 func (this *SimpleAuthRestHelper) OnPost(structColsParams ...[]string) {
 
 	ob := this.Dao.CreateModelObject()
-	e := json.Unmarshal(this.Ctx.Input.RequestBody, ob)
+
+	e := this.RequestBodyToJsonObject(ob)
 
 	if e != nil {
 		this.C.AjaxError(e)
@@ -213,7 +213,8 @@ func (this *SimpleAuthRestHelper) OnPut(k string, t reflect.Kind, structColsPara
 	}
 
 	ob := this.Dao.CreateModelObject()
-	e = json.Unmarshal(this.Ctx.Input.RequestBody, ob)
+
+	e = this.RequestBodyToJsonObject(ob)
 	if e != nil {
 		this.C.AjaxError(e)
 		return

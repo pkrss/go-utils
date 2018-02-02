@@ -1,16 +1,15 @@
 package orm
 
 type OrmAdapterInterface interface {
-	RegModel(m BaseModelInterface)
-	FindOneByCond(m BaseModelInterface, cond string, val []interface{}, selCols []string) error
-	FindOneBySql(m BaseModelInterface, sql string, val ...interface{}) error
-	UpdateByCond(m BaseModelInterface, cond string, val []interface{}, selCols []string) error
-	DeleteByCond(m BaseModelInterface, cond string, val ...interface{}) error
-	Insert(m BaseModelInterface, selCols ...string) error
-	LimitSqlStyle() string
-	QueryOneBySql(recordPointer interface{}, sql string, val ...interface{}) error
-	QueryBySql(recordPointer interface{}, sql string, val ...interface{}) error
-	InArg(arg interface{}) interface{}
+	RegModel(model BaseModelInterface)
+
+	ExecSql(sql string, val ...interface{}) error
+	QueryOneBySql(outputRecord interface{}, sql string, val ...interface{}) error
+	QueryBySql(outputRecords interface{}, sql string, val ...interface{}) error
+
+	SqlInArg(arg interface{}) interface{}
+	SqlReturnSql() string
+	SqlLimitStyle() string
 }
 
 var DefaultOrmAdapter OrmAdapterInterface

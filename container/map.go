@@ -84,3 +84,19 @@ func MapGetStringValue(m map[string]interface{}, field string) string {
 
 	return ret
 }
+
+func MapKeys(m map[string]interface{}) []string {
+	ret := make([]string, 0)
+	for k, _ := range m {
+		ret = append(ret, k)
+	}
+	return ret
+}
+
+func MapValues(m map[string]interface{}) []interface{} {
+	ret := make([]interface{}, 0)
+	for _, v := range m {
+		ret = append(ret, v)
+	}
+	return ret
+}

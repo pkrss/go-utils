@@ -5,23 +5,23 @@ import (
 
 	"github.com/pkrss/go-utils/beans"
 	baseOrm "github.com/pkrss/go-utils/orm"
-	baseOrmCustom "github.com/pkrss/go-utils/orm/custom"
+	custom "github.com/pkrss/go-utils/orm/fields"
 
 	pqsql "github.com/pkrss/go-utils/orm/pqsql"
 )
 
 type OAuthApp struct {
 	baseOrm.BaseModel
-	Id                    int                    `json:"id"`
-	Code                  string                 `json:"code"`
-	Title                 string                 `json:"title"`
-	AppId                 string                 `json:"appId"`
-	AppSecurityKey        string                 `json:"appSecurityKey"`
-	AppOauthScope         string                 `json:"appOauthScope"`
-	AppBaseUrl            string                 `json:"appBaseUrl"`
-	AccessToken           string                 `json:"accessToken"`
-	AccessTokenExpireTime baseOrmCustom.JsonTime `json:"accessTokenExpireTime"`
-	CreateTime            baseOrmCustom.JsonTime `json:"createTime"`
+	Id                    int             `json:"id"`
+	Code                  string          `json:"code"`
+	Title                 string          `json:"title"`
+	AppId                 string          `json:"appId"`
+	AppSecurityKey        string          `json:"appSecurityKey"`
+	AppOauthScope         string          `json:"appOauthScope"`
+	AppBaseUrl            string          `json:"appBaseUrl"`
+	AccessToken           string          `json:"accessToken"`
+	AccessTokenExpireTime custom.JsonTime `json:"accessTokenExpireTime"`
+	CreateTime            custom.JsonTime `json:"createTime"`
 }
 
 var dao baseOrm.BaseDaoInterface

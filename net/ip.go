@@ -4,20 +4,19 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/astaxie/beego/context"
+	"github.com/pkrss/go-utils/mvc/controllers"
 )
 
-func GetClientIpAddr(ctx *context.Context) string {
-	request := ctx.Input
-	ipAddress := request.Header("x-forwarded-for")
+func GetClientIpAddr(ctx controllers.ControllerInterface) string {
+	ipAddress := ctx.Header("x-forwarded-for")
 	if ipAddress == "" || "unknown" == strings.ToLower(ipAddress) {
-		ipAddress = request.Header("Proxy-Client-IP")
+		ipAddress = ctx.Header("Proxy-Client-IP")
 	}
 	if ipAddress == "" || "unknown" == strings.ToLower(ipAddress) {
-		ipAddress = request.Header("WL-Proxy-Client-IP")
+		ipAddress = ctx.Header("WL-Proxy-Client-IP")
 	}
 	if ipAddress == "" || "unknown" == strings.ToLower(ipAddress) {
-		ipAddress = ctx.Request.RemoteAddr
+		ipAddress = ctx.GetRequest().RemoteAddr
 		// if ipAddress == "127.0.0.1" {
 		// 	// 根据网卡取本机配置的IP
 		// 	InetAddress inet = null;

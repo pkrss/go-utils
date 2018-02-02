@@ -3,6 +3,7 @@ package orm
 import (
 	"errors"
 	"log"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -86,7 +87,7 @@ func (this *ListRawHelper) appendNormalWhereConds() {
 		}
 
 		this.Where += " " + in_name + " in ? "
-		this.WhereArgs = append(this.WhereArgs, this.OrmAdapter.InArg(in_values))
+		this.WhereArgs = append(this.WhereArgs, this.OrmAdapter.SqlInArg(in_values))
 	}
 
 	for f := true; f; f = false {
@@ -142,7 +143,7 @@ func (this *ListRawHelper) getQueryPageablePostfix(sql string) string {
 		offset = (pageable.PageNumber - 1) * pageable.PageSize
 	}
 
-	s := this.OrmAdapter.LimitSqlStyle()
+	s := this.OrmAdapter.SqlLimitStyle()
 	slimit := strconv.Itoa(pageable.PageSize)
 	soffset := strconv.Itoa(offset)
 	s = strings.Replace(s, "{limit}", slimit, -1)
@@ -272,6 +273,22 @@ func (this *ListRawHelper) SelSqlListQuery(selSql string, resultListPointer inte
 	sql = this.getQueryPageablePostfix(sql)
 
 	e = this.OrmAdapter.QueryBySql(resultListPointer, sql, this.WhereArgs...)
+
+	val := reflect.ValueOf(resultListPointer)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	if val.Kind() != reflect.Slice {
+		return
+	}
+	c := val.Len()
+	for i := 0; i < c; i++ {
+		m := val.Index(i).Addr().Interface().(BaseModelInterface)
+		if m == nil {
+			continue
+		}
+		m.FilterValue()
+	}
 
 	return
 

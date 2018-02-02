@@ -1,4 +1,4 @@
-package custom
+package fields
 
 import (
 	"fmt"

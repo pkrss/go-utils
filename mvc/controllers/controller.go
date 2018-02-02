@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	pkBeans "github.com/pkrss/go-utils/beans"
 )
@@ -23,9 +24,19 @@ type ControllerInterface interface {
 
 	SetUrlParameters(p map[string]string)
 	SetResponseWriter(w http.ResponseWriter)
+	GetResponseWriter() http.ResponseWriter
 	SetRequest(r *http.Request)
+	GetRequest() *http.Request
+	RequestBodyToJsonObject(ob interface{}) error
 
 	AjaxError(message string, codes ...int)
+
+	Header(key string) string
+	SetCookieValue(key string, val string, maxAgeSecondss ...int)
+	CookieValue(key string) string
+	GetInt(key string, defValues ...int) int
+	GetId64(key string, defValues ...int64) int64
+	GetString(key string, defValues ...string) string
 }
 
 type Controller struct {
@@ -75,6 +86,21 @@ func (this *Controller) SetRequest(r *http.Request) {
 	this.R = r
 }
 
+func (this *Controller) GetResponseWriter() http.ResponseWriter {
+	return this.W
+}
+func (this *Controller) GetRequest() *http.Request {
+	decoder := json.NewDecoder(this.R.Body)
+	err := decoder.Decode(&t)
+	return this.R
+}
+func (this *Controller) RequestBodyToJsonObject(ob interface{}) error {
+	decoder := json.NewDecoder(this.R.Body)
+	err := decoder.Decode(ob)
+	this.R.Body.Close()
+	return err
+}
+
 /*
 	\param key string, ":k": search in url path paramters, else search in url paramters
 */
@@ -117,6 +143,23 @@ func (this *Controller) CookieValue(key string) string {
 		return ""
 	}
 	return c.Value
+}
+
+func (this *Controller) SetCookieValue(key string, val string, maxAgeSecondss ...int) {
+	if val == "" {
+		c := this.Cookie(key)
+		if c != nil {
+			c.Expires = time.Unix(0, 0)
+		}
+		return
+	}
+	maxAgeSecond := 0
+	if len(maxAgeSecondss) > 0 {
+		maxAgeSecond = maxAgeSecondss[0]
+	}
+	expiration := time.Now().Add(maxAgeSecond * time.Second)
+	cookie := http.Cookie{Name: key, Value: val, Path: "/", Expires: expiration, MaxAge: maxAgeSecond}
+	http.SetCookie(this.W, &cookie)
 }
 
 func (this *Controller) JsonResult(out interface{}) {

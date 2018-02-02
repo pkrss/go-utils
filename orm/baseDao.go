@@ -3,16 +3,18 @@ package orm
 import (
 	"errors"
 	"reflect"
+	"strings"
 
 	"github.com/pkrss/go-utils/beans"
 
+	pkContainer "github.com/pkrss/go-utils/container"
 	pkReflect "github.com/pkrss/go-utils/reflect"
 )
 
 type BaseDaoInterface interface {
 	CreateModelObject() BaseModelInterface
-	// create type is: *[]BaseModel
-	CreateModelSlice(len int, cap int) interface{}
+
+	CreateModelSlice(len int, cap int) interface{} // create type is: *[]BaseModel
 	FindOneById(id interface{}) (BaseModelInterface, error)
 	FindOneByFilter(col string, val interface{}, structColsParams ...[]string) (BaseModelInterface, error)
 	UpdateByFilter(ob BaseModelInterface, col string, val interface{}, structColsParams ...[]string) error
@@ -83,10 +85,25 @@ func (this *BaseDao) FindOneByFilter(col string, val interface{}, structColsPara
 	}
 
 	var err error
+
 	if selSql == "" {
-		err = this.OrmAdapter.FindOneByCond(obj, col+" = ?", []interface{}{val}, selCols)
-	} else {
-		err = this.OrmAdapter.FindOneBySql(obj, selSql+" WHERE "+col+" = ?", val)
+		selSql = "SELECT "
+
+		if len(selCols) == 0 {
+			selSql += "*"
+		} else {
+			selSql += strings.Join(selCols, ",")
+		}
+
+		selSql = " FROM " + obj.TableName()
+	}
+
+	sql := selSql + " WHERE " + col + " = ?"
+
+	err = this.OrmAdapter.QueryOneBySql(obj, sql, val)
+
+	if err == nil && obj == nil {
+		err = errors.New("query one record is nil")
 	}
 
 	if err != nil {
@@ -99,12 +116,24 @@ func (this *BaseDao) FindOneByFilter(col string, val interface{}, structColsPara
 }
 
 func (this *BaseDao) UpdateByFilter(ob BaseModelInterface, col string, val interface{}, structColsParams ...[]string) error {
-	var selCols []string
-	if len(structColsParams) > 0 {
-		selCols = pkReflect.GetStructFieldNames(ob, structColsParams...)
+	dbField2Values := getObDbFieldsAndValues(ob, structColsParams...)
+	c := len(dbField2Values)
+	if c == 0 {
+		return errors.New("No fields need update!")
 	}
 
-	return this.OrmAdapter.UpdateByCond(ob, col+" = ?", []interface{}{val}, selCols)
+	keys := pkContainer.MapKeys(dbField2Values)
+	values := pkContainer.MapValues(dbField2Values)
+
+	sql := "UPDATE " + ob.TableName() + " SET "
+	for i := 0; i < c; i++ {
+		sql += keys[i] + "=?"
+		if i != c-1 {
+			sql += ","
+		}
+	}
+
+	return this.OrmAdapter.ExecSql(sql, values...)
 }
 
 func (this *BaseDao) DeleteOneById(id interface{}) error {
@@ -112,20 +141,51 @@ func (this *BaseDao) DeleteOneById(id interface{}) error {
 }
 
 func (this *BaseDao) DeleteByFilter(col string, val interface{}) error {
-	return this.OrmAdapter.DeleteByCond(this.ObjModel, col+" = ?", val)
+	sql := "DELETE " + this.ObjModel.TableName() + " WHERE " + col + " = ?"
+	return this.OrmAdapter.ExecSql(sql, val)
 }
 
 func (this *BaseDao) UpdateById(ob BaseModelInterface, id interface{}, structColsParams ...[]string) error {
 	return this.UpdateByFilter(ob, ob.IdColumn(), id, structColsParams...)
 }
-
 func (this *BaseDao) Insert(ob BaseModelInterface, structColsParams ...[]string) error {
-	var selCols []string
-	if len(structColsParams) > 0 {
-		selCols = pkReflect.GetStructFieldNames(ob, structColsParams...)
+
+	dbField2Values := getObDbFieldsAndValues(ob, structColsParams...)
+	c := len(dbField2Values)
+	if c == 0 {
+		return errors.New("No fields need insert!")
 	}
 
-	return this.OrmAdapter.Insert(ob, selCols...)
+	keys := pkContainer.MapKeys(dbField2Values)
+	values := pkContainer.MapValues(dbField2Values)
+	t := make([]string, c)
+	for i := 0; i < c; i++ {
+		t[i] = "?"
+	}
+
+	sql := "INSERT INTO " + ob.TableName() + " (" + strings.Join(keys, ",") + ") VALUES(" + strings.Join(t, ",") + ")"
+
+	if ob.IdColumn() != "" && ob.IdType() != nil {
+
+		returnSql := this.OrmAdapter.SqlReturnSql()
+
+		if returnSql != "" {
+			returnSql = strings.Replace(returnSql, "{id}", ob.IdColumn(), -1)
+
+			sql += returnSql
+
+			idVal := reflect.New(ob.IdType())
+
+			e := this.OrmAdapter.QueryOneBySql(idVal.Addr().Interface(), sql, values...)
+			if e == nil {
+				pkReflect.SetStructFieldValue(ob, ob.IdColumn(), idVal.Interface())
+			}
+			return e
+
+		}
+	}
+
+	return this.OrmAdapter.ExecSql(sql, values...)
 }
 
 type SelectListCallback func(listRawHelper *ListRawHelper) error
