@@ -71,7 +71,7 @@ func main() {
 	profile.SetMyGetString(conf.GetString)
 
 	pkRouters.AddRouter("/{id:\\d+}/test1", &MainController{}, "get:Test1")
-	r := pkRouters.AddRouter("/", &MainController{})
+	r := pkRouters.AddRouterOptSlash("/", &MainController{})
 	pkRouters.AddRouter("/conf", &MainController{}, "get:Conf")
 
 	// access: http://localhost:8080/s/

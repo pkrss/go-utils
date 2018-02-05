@@ -42,6 +42,30 @@ func getApp() *mux.Router {
 	pattern: "/user/{name:[a-z]+}/profile"
 */
 func AddRouter(pattern string, c controllers.ControllerInterface, methodStrs ...string) http.Handler {
+	// StrictSlash
+	addRouter(pattern, c, methodStrs...)
+
+	return getApp()
+}
+
+func AddRouterOptSlash(pattern string, c controllers.ControllerInterface, methodStrs ...string) http.Handler {
+	addRouter(pattern, c, methodStrs...)
+
+	// app.StrictSlash(true)
+
+	if strings.HasPrefix(pattern, "/") {
+		l := len(pattern)
+		if l > 1 {
+			addRouter(pattern[0:l-1], c, methodStrs...)
+		}
+	} else {
+		addRouter(pattern+"/", c, methodStrs...)
+	}
+
+	return getApp()
+}
+
+func addRouter(pattern string, c controllers.ControllerInterface, methodStrs ...string) *mux.Route {
 
 	app := getApp()
 
@@ -60,7 +84,7 @@ func AddRouter(pattern string, c controllers.ControllerInterface, methodStrs ...
 		r.Methods(strings.Split(m, ",")...)
 	}
 
-	return app
+	return r
 }
 
 func SetStaticPath(urlPattern string, fileLocalDir string) http.Handler {
