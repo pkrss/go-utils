@@ -2,6 +2,7 @@ package pqsql
 
 import (
 	"errors"
+	"reflect"
 
 	"github.com/go-pg/pg"
 	// "github.com/go-pg/pg/orm"
@@ -55,7 +56,15 @@ func (this *PgSqlAdapter) QueryOneBySql(outputRecord interface{}, sql string, va
 		return err
 	}
 
-	_, e := db.QueryOne(pg.Scan(outputRecord), sql, val...)
+	vv := reflect.ValueOf(outputRecord)
+	if vv.Kind() == reflect.Ptr {
+		vv = vv.Elem()
+	}
+	if vv.Kind() != reflect.Struct {
+		outputRecord = pg.Scan(outputRecord)
+	}
+
+	_, e := db.QueryOne(outputRecord, sql, val...)
 	return e
 }
 

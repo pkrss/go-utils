@@ -67,8 +67,7 @@ func main() {
 	pqsql.Db = pqsql.CreatePgSql()
 	baseOrm.DefaultOrmAdapter = &pqsql.PgSqlAdapter{}
 
-	var oAuthApp OAuthApp
-	dao = baseOrm.CreateBaseDao(&oAuthApp)
+	dao = baseOrm.CreateBaseDao(&OAuthApp{})
 
 	testMakeSlice()
 	testFindOne()

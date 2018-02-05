@@ -50,6 +50,10 @@ func (this *UUID) String() string {
 }
 
 func (this *UUID) Scan(src interface{}) error {
+	switch d := src.(type) {
+	case []byte:
+		src = string(d)
+	}
 	return this.SetRaw(src)
 }
 

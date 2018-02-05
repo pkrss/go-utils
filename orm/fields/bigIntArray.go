@@ -55,6 +55,10 @@ func (this *BigIntArray) String() string {
 }
 
 func (this *BigIntArray) Scan(src interface{}) error {
+	switch d := src.(type) {
+	case []byte:
+		src = string(d)
+	}
 	return this.SetRaw(src)
 }
 

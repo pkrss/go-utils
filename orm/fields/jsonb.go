@@ -26,6 +26,10 @@ func (j *JsonbField) String() string {
 }
 
 func (this *JsonbField) Scan(src interface{}) error {
+	switch d := src.(type) {
+	case []byte:
+		src = string(d)
+	}
 	return this.SetRaw(src)
 }
 

@@ -95,7 +95,7 @@ func (this *BaseDao) FindOneByFilter(col string, val interface{}, structColsPara
 			selSql += strings.Join(selCols, ",")
 		}
 
-		selSql = " FROM " + obj.TableName()
+		selSql += " FROM " + obj.TableName()
 	}
 
 	sql := selSql + " WHERE " + col + " = ?"
