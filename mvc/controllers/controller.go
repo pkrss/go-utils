@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	pkBeans "github.com/pkrss/go-utils/beans"
@@ -21,6 +22,8 @@ type ControllerInterface interface {
 
 	OnPrepare()
 	OnLeave()
+
+	RenderViewSimple(viewPath string, args ...interface{})
 
 	SetUrlParameters(p map[string]string)
 	SetResponseWriter(w http.ResponseWriter)
@@ -380,4 +383,13 @@ func (this *Controller) GetString(key string, defValues ...string) string {
 	}
 
 	return s
+}
+
+func (this *Controller) RenderViewSimple(viewPath string, args ...interface{}) {
+	page, err := template.ParseFiles(viewPath)
+	if err != nil {
+		this.AjaxError(err.Error())
+		return
+	}
+	page.ExecuteTemplate(this.W, "", args)
 }

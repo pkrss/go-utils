@@ -70,6 +70,10 @@ type SimpleAuthRestCreateController struct {
 	Params *SimpleAuthRestCreateParams
 }
 
+func (this *SimpleAuthRestCreateController) GetParams() *SimpleAuthRestCreateParams {
+	return this.Params
+}
+
 func (this *SimpleAuthRestCreateController) OnPrepare() {
 	this.Model = this.Params.RecordModel
 	this.SimpleAuthRestController.OnPrepare()

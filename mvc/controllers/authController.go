@@ -15,6 +15,10 @@ var DefaultUserInterface ControllerUserInterface
 ///////////////////////////////////////////////////////////
 
 type AuthControllerInterface interface {
+	LoadUserToken() string
+	LoadUserContext() interface{}
+	CheckUserPrivilege(requiredPrivilege int) bool
+	CheckUserIsClientManagerOrSelf(targetUserId string) bool
 }
 
 type AuthController struct {
