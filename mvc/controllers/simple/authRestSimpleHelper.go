@@ -78,7 +78,7 @@ func (this *SimpleAuthRestHelper) OnGetList(selSql string, cb orm.SelectListCall
 func (this *SimpleAuthRestHelper) OnGetListWithPrivilege(requiredPrivilege interface{}, selSql string, cb orm.SelectListCallback) {
 	ok := this.C.CheckUserPrivilege(requiredPrivilege)
 	if !ok {
-		this.C.AjaxError("权限不足")
+		this.C.AjaxError("Privilege error")
 		return
 	}
 
@@ -125,7 +125,7 @@ func (this *SimpleAuthRestHelper) OnPost(structColsParams ...*pkReflect.StructSe
 func (this *SimpleAuthRestHelper) OnPostWithPrivilege(requiredPrivilege interface{}, structColsParams ...*pkReflect.StructSelCols) {
 	ok := this.C.CheckUserPrivilege(requiredPrivilege)
 	if !ok {
-		this.C.AjaxError("权限不足")
+		this.C.AjaxError("Privilege error")
 		return
 	}
 
@@ -200,7 +200,7 @@ func (this *SimpleAuthRestHelper) OnGetOneWithPrivilege(requiredPrivilege interf
 
 	ok := this.C.CheckUserPrivilege(requiredPrivilege)
 	if !ok {
-		this.C.AjaxError("权限不足")
+		this.C.AjaxError("Privilege error")
 		return
 	}
 
@@ -255,7 +255,7 @@ func (this *SimpleAuthRestHelper) OnPutWithPrivilege(requiredPrivilege interface
 
 	ok := this.C.CheckUserPrivilege(requiredPrivilege)
 	if !ok {
-		this.C.AjaxUnAuthorized("权限不足")
+		this.C.AjaxUnAuthorized("Privilege error")
 		return
 	}
 
@@ -308,7 +308,7 @@ func (this *SimpleAuthRestHelper) OnDeleteWithPrivilege(requiredPrivilege interf
 
 	ok := this.C.CheckUserPrivilege(requiredPrivilege)
 	if !ok {
-		this.C.AjaxError("权限不足")
+		this.C.AjaxError("Privilege error")
 		return
 	}
 
