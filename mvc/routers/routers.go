@@ -57,7 +57,7 @@ func AddRouterOptSlash(pattern string, c controllers.ControllerInterface, method
 
 	// app.StrictSlash(true)
 
-	if strings.HasPrefix(pattern, "/") {
+	if strings.HasSuffix(pattern, "/") {
 		l := len(pattern)
 		if l > 1 {
 			addRouter(pattern[0:l-1], c, methodStrs...)

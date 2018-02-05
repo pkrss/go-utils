@@ -18,3 +18,11 @@ type OAuthApp struct {
 	AccessTokenExpireTime custom.JsonTime `json:"accessTokenExpireTime"`
 	CreateTime            custom.JsonTime `json:"createTime"`
 }
+
+func (this *OAuthApp) TableName() string {
+	return "myzc_oauth_app"
+}
+
+func (this *OAuthApp) FilterValue() {
+	this.AppSecurityKey = "******"
+}

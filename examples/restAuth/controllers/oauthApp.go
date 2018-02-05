@@ -3,6 +3,7 @@ package controllers
 import (
 	"reflect"
 
+	"github.com/pkrss/go-utils/examples/restAuth/auth"
 	"github.com/pkrss/go-utils/examples/restAuth/models"
 	base "github.com/pkrss/go-utils/mvc/controllers"
 	"github.com/pkrss/go-utils/mvc/controllers/simple"
@@ -14,7 +15,7 @@ func CreateOAuthAppListRestController() *simple.SimpleAuthRestListCreateControll
 	postStructColsParams := &pkReflect.StructSelCols{ExcludeCols: []string{"Id", "CreateTime"}}
 	params := simple.SimpleAuthRestListCreateParams{
 		RecordModel: &models.OAuthApp{}, SelectListCbFun: oauthAppGetList,
-		SelectPrivilege: Admin, PostPrivilege: Admin, PostStructColsParams: postStructColsParams,
+		SelectPrivilege: auth.Admin, PostPrivilege: auth.Admin, PostStructColsParams: postStructColsParams,
 	}
 
 	return simple.CreateSimpleListRestController(&params)
@@ -24,7 +25,7 @@ func CreateOAuthAppRestController() *simple.SimpleAuthRestCreateController {
 	putStructColsParams := &pkReflect.StructSelCols{ExcludeCols: []string{"Id", "CreateTime"}}
 	params := simple.SimpleAuthRestCreateParams{
 		RecordModel: &models.OAuthApp{}, IdUrlParam: ":id", IdType: reflect.Int64,
-		SelectPrivilege: Admin, PutPrivilege: Admin, PutStructColsParams: putStructColsParams, DeletePrivilege: Admin,
+		SelectPrivilege: auth.Admin, PutPrivilege: auth.Admin, PutStructColsParams: putStructColsParams, DeletePrivilege: auth.Admin,
 	}
 
 	return simple.CreateSimpleRestController(&params)
@@ -49,7 +50,7 @@ func oauthAppGetList(listRawHelper *orm.ListRawHelper) error {
 
 	userId := c.GetString("userId")
 	if userId != "" {
-		userContext := ac.LoadUserContext().(*UserContext)
+		userContext := ac.LoadUserContext().(*auth.UserContext)
 		if "me" == userId {
 			userId = userContext.UserId
 		}
@@ -57,7 +58,7 @@ func oauthAppGetList(listRawHelper *orm.ListRawHelper) error {
 
 		role := userContext.Role
 
-		if role < Admin {
+		if role < auth.Admin {
 			sql := `id in (` +
 				`  select menu_id_list from hx_admin_role where user_role = (` +
 				`    select role_id from hx_admin_user_role where user_id = ?` +

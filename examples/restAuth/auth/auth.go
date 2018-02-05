@@ -16,6 +16,7 @@ type UserContext struct {
 }
 
 type MyAuthImpl struct {
+	Token string
 }
 
 func (this *MyAuthImpl) TokenKey() string {
@@ -32,7 +33,7 @@ func (this *MyAuthImpl) LoadUserToken(c controllers.ControllerInterface) string 
 
 	tokenKey := this.TokenKey()
 
-	return c.CookieValue(k)
+	return c.CookieValue(tokenKey)
 }
 
 func (this *MyAuthImpl) LoadTokenObj(token string) interface{} {

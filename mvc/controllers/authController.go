@@ -1,12 +1,10 @@
 package controllers
 
-import "github.com/pkrss/go-utils/mvc/controllers"
-
 ///////////////////////////////////////////////////////////
 
 type AuthImplInterface interface {
 	TokenKey() string
-	LoadUserToken(c controllers.ControllerInterface) string
+	LoadUserToken(c ControllerInterface) string
 	LoadTokenObj(token string) interface{}
 	SaveTokenObj(token string, obj interface{})
 	CheckUserPrivilege(userContext interface{}, requiredPrivilege interface{}) bool
@@ -53,7 +51,7 @@ func (this *AuthController) LoadUserToken() string {
 		return ""
 	}
 
-	token = authImpl.LoadUserToken()
+	token = authImpl.LoadUserToken(this)
 
 	this.Token = token
 

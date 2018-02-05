@@ -7,6 +7,7 @@ import (
 	"sx98/sys/constants"
 	"time"
 
+	"github.com/pkrss/go-utils/examples/restAuth/auth"
 	"github.com/pkrss/go-utils/examples/restAuth/models"
 	base "github.com/pkrss/go-utils/mvc/controllers"
 	"github.com/pkrss/go-utils/mvc/controllers/simple"
@@ -25,7 +26,7 @@ func (this *UserController) OnPrepare() {
 	}
 	params := simple.SimpleAuthRestListCreateParams{
 		RecordModel: &models.User{}, SelectListCbFun: userGetList,
-		SelectPrivilege: Admin, PostPrivilege: Admin, PostStructColsParams: postStructColsParams,
+		SelectPrivilege: auth.Admin, PostPrivilege: auth.Admin, PostStructColsParams: postStructColsParams,
 		OnRestDbCbFun: userListOnRestDbCallback,
 	}
 
@@ -79,7 +80,7 @@ func userListOnRestDbCallback(op simple.OpType, ob interface{}, dao orm.BaseDaoI
 			}
 		}
 
-		userContext := c.(base.AuthControllerInterface).LoadUserContext().(*UserContext)
+		userContext := c.(base.AuthControllerInterface).LoadUserContext().(*auth.UserContext)
 		if newUserDomain.Role > userContext.Role {
 			return errors.New("越权操作")
 		}
@@ -107,7 +108,14 @@ func (this *UserController) Post() {
 }
 
 func (this *UserController) Login() {
-	this.RenderViewSimple("users/login.html")
+	authImpl := this.GetUserAuthImpl()
+	if authImpl == nil {
+		return
+	}
+
+	this.SetCookieValue(authImpl.TokenKey(), "your created token value", 86400)
+
+	this.RenderViewSimple("views/users/login.html")
 }
 
 type UserIdController struct {
@@ -120,7 +128,7 @@ func (this *UserIdController) OnPrepare() {
 	}
 	params := simple.SimpleAuthRestCreateParams{
 		RecordModel: &models.User{}, IdUrlParam: ":id", IdType: reflect.String,
-		PutStructColsParams: putStructColsParams, DeletePrivilege: Admin,
+		PutStructColsParams: putStructColsParams, DeletePrivilege: auth.Admin,
 		OnRestDbCbFun: userOnRestDbCallback,
 	}
 
@@ -139,15 +147,6 @@ func (this *UserIdController) Detail() {
 
 func (this *UserIdController) Put() {
 	this.Put()
-}
-
-func (this *UserIdController) Login() {
-	authImpl := this.GetUserAuthImpl()
-	if authImpl == nil {
-		return ""
-	}
-
-	this.SetCookieValue(authImpl.TokenKey(), "your created token value")
 }
 
 func (this *UserIdController) Delete() {
@@ -176,8 +175,8 @@ func userOnRestDbCallback(op simple.OpType, ob interface{}, dao orm.BaseDaoInter
 		denyKeys := []string{"Password", "UpdateTime"}
 		putStructColsParams.ExcludeCols = append(putStructColsParams.ExcludeCols, denyKeys...)
 
-		userContext := c.(base.AuthControllerInterface).LoadUserContext().(*UserContext)
-		if userContext.Role >= Admin {
+		userContext := c.(base.AuthControllerInterface).LoadUserContext().(*auth.UserContext)
+		if userContext.Role >= auth.Admin {
 			// ob.Password = ""
 		} else if record.Id.String() == userContext.UserId {
 			userCanNotModifyKeys := []string{"InviteCode", "Denied", "Role", "Vip", "FansCount", "FollowsCount"}
