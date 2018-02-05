@@ -16,7 +16,7 @@ var DefaultAuthImpl AuthImplInterface
 ///////////////////////////////////////////////////////////
 
 type AuthControllerInterface interface {
-	GetAuthImplInterface() AuthImplInterface
+	GetUserAuthImpl() AuthImplInterface
 	LoadUserToken() string
 	LoadUserContext() interface{}
 	CheckUserPrivilege(requiredPrivilege interface{}) bool

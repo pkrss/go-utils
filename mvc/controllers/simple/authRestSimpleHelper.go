@@ -70,7 +70,7 @@ func (this *SimpleAuthRestHelper) OnGetList(selSql string, cb orm.SelectListCall
 
 	c := 0
 	if l != nil {
-		c = reflect.ValueOf(l).Len()
+		c = reflect.ValueOf(l).Elem().Len()
 	}
 	this.C.AjaxDbList(pageable, l, c, total, this.OldCodeFormat)
 }
