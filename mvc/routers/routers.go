@@ -31,11 +31,15 @@ func addHandle(pattern string, c controllers.ControllerInterface, methodStr stri
 
 var app *mux.Router
 
-func getApp() *mux.Router {
+func getMuxApp() *mux.Router {
 	if app == nil {
 		app = mux.NewRouter()
 	}
 	return app
+}
+
+func GetApp() http.Handler {
+	return getMuxApp()
 }
 
 /*
@@ -45,7 +49,7 @@ func AddRouter(pattern string, c controllers.ControllerInterface, methodStrs ...
 	// StrictSlash
 	addRouter(pattern, c, methodStrs...)
 
-	return getApp()
+	return getMuxApp()
 }
 
 func AddRouterOptSlash(pattern string, c controllers.ControllerInterface, methodStrs ...string) http.Handler {
@@ -62,12 +66,12 @@ func AddRouterOptSlash(pattern string, c controllers.ControllerInterface, method
 		addRouter(pattern+"/", c, methodStrs...)
 	}
 
-	return getApp()
+	return getMuxApp()
 }
 
 func addRouter(pattern string, c controllers.ControllerInterface, methodStrs ...string) *mux.Route {
 
-	app := getApp()
+	app := getMuxApp()
 
 	methodStr := ""
 	if len(methodStrs) > 0 {
@@ -89,7 +93,7 @@ func addRouter(pattern string, c controllers.ControllerInterface, methodStrs ...
 
 func SetStaticPath(urlPattern string, fileLocalDir string) http.Handler {
 
-	app := getApp()
+	app := getMuxApp()
 
 	fsh := http.FileServer(http.Dir(fileLocalDir))
 	fsh = http.StripPrefix(urlPattern, fsh)

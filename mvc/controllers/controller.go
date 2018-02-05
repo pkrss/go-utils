@@ -18,8 +18,6 @@ type ControllerInterface interface {
 	// Put()
 	// Patch()
 
-	CloneAttribute(src ControllerInterface)
-
 	OnPrepare()
 	OnLeave()
 
@@ -54,11 +52,9 @@ func (this *Controller) OnPrepare() {
 }
 
 func (this *Controller) OnLeave() {
-
-}
-
-func (this *Controller) CloneAttribute(src ControllerInterface) {
-
+	this.W = nil
+	this.R = nil
+	this.UrlParameters = nil
 }
 
 // func (this *Controller) Get() {

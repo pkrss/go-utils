@@ -2,7 +2,7 @@ package controllers
 
 ///////////////////////////////////////////////////////////
 
-type ControllerUserInterface interface {
+type AuthImplInterface interface {
 	TokenKey() string
 	LoadTokenObj(token string) interface{}
 	SaveTokenObj(token string, obj interface{})
@@ -10,30 +10,31 @@ type ControllerUserInterface interface {
 	IsClientManagerOrSelf(userContext interface{}, targetUserId interface{}) bool
 }
 
-var DefaultUserInterface ControllerUserInterface
+var DefaultAuthImpl AuthImplInterface
 
 ///////////////////////////////////////////////////////////
 
 type AuthControllerInterface interface {
+	GetAuthImplInterface() AuthImplInterface
 	LoadUserToken() string
 	LoadUserContext() interface{}
-	CheckUserPrivilege(requiredPrivilege int) bool
-	CheckUserIsClientManagerOrSelf(targetUserId string) bool
+	CheckUserPrivilege(requiredPrivilege interface{}) bool
+	CheckUserIsClientManagerOrSelf(targetUserId interface{}) bool
 }
 
 type AuthController struct {
 	Controller
 
-	UserContext   interface{}
-	Token         string
-	UserInterface ControllerUserInterface
+	UserContext interface{}
+	Token       string
+	UserAuthObj AuthImplInterface
 }
 
-func (this *AuthController) GetUserController() ControllerUserInterface {
-	if this.UserInterface != nil {
-		return this.UserInterface
+func (this *AuthController) GetUserAuthImpl() AuthImplInterface {
+	if this.UserAuthObj != nil {
+		return this.UserAuthObj
 	}
-	return DefaultUserInterface
+	return DefaultAuthImpl
 }
 
 func (this *AuthController) LoadUserToken() string {
@@ -44,11 +45,11 @@ func (this *AuthController) LoadUserToken() string {
 		return token
 	}
 
-	u := this.GetUserController()
-	if u == nil {
+	authImpl := this.GetUserAuthImpl()
+	if authImpl == nil {
 		return ""
 	}
-	tokenKey := u.TokenKey()
+	tokenKey := authImpl.TokenKey()
 
 	for f := true; f; f = false {
 
@@ -94,25 +95,30 @@ func (this *AuthController) LoadUserContext() interface{} {
 		return nil
 	}
 
-	u := this.GetUserController()
-	if u == nil {
+	authImpl := this.GetUserAuthImpl()
+	if authImpl == nil {
 		return nil
 	}
 
-	this.UserContext = u.LoadTokenObj(token)
+	this.UserContext = authImpl.LoadTokenObj(token)
 
 	return this.UserContext
 }
 
 //登录状态验证
-func (this *AuthController) CheckUserPrivilege(requiredPrivilege int) bool {
+func (this *AuthController) CheckUserPrivilege(requiredPrivilege interface{}) bool {
 	userContext := this.LoadUserContext()
 
-	if DefaultUserInterface == nil {
+	if userContext == nil {
 		return false
 	}
 
-	if DefaultUserInterface.CheckUserPrivilege(userContext, requiredPrivilege) {
+	authImpl := this.GetUserAuthImpl()
+	if authImpl == nil {
+		return false
+	}
+
+	if authImpl.CheckUserPrivilege(userContext, requiredPrivilege) {
 		return true
 	}
 
@@ -122,14 +128,19 @@ func (this *AuthController) CheckUserPrivilege(requiredPrivilege int) bool {
 
 	return false
 }
-func (this *AuthController) CheckUserIsClientManagerOrSelf(targetUserId string) bool {
+func (this *AuthController) CheckUserIsClientManagerOrSelf(targetUserId interface{}) bool {
 	userContext := this.LoadUserContext()
 
-	if DefaultUserInterface == nil {
+	if userContext == nil {
 		return false
 	}
 
-	if DefaultUserInterface.IsClientManagerOrSelf(userContext, targetUserId) {
+	authImpl := this.GetUserAuthImpl()
+	if authImpl == nil {
+		return false
+	}
+
+	if authImpl.IsClientManagerOrSelf(userContext, targetUserId) {
 		return true
 	}
 

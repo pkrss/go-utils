@@ -76,9 +76,9 @@ func (this *SimpleAuthRestHelper) OnGetList(selSql string, cb orm.SelectListCall
 }
 
 func (this *SimpleAuthRestHelper) OnGetListWithPrivilege(requiredPrivilege interface{}, selSql string, cb orm.SelectListCallback) {
-	e := this.C.CheckUserPrivilege(requiredPrivilege)
-	if e != nil {
-		this.C.AjaxError(e.Error())
+	ok := this.C.CheckUserPrivilege(requiredPrivilege)
+	if !ok {
+		this.C.AjaxError("权限不足")
 		return
 	}
 
@@ -123,9 +123,9 @@ func (this *SimpleAuthRestHelper) OnPost(structColsParams ...*pkReflect.StructSe
 }
 
 func (this *SimpleAuthRestHelper) OnPostWithPrivilege(requiredPrivilege interface{}, structColsParams ...*pkReflect.StructSelCols) {
-	e := this.C.CheckUserPrivilege(requiredPrivilege)
-	if e != nil {
-		this.C.AjaxError(e.Error())
+	ok := this.C.CheckUserPrivilege(requiredPrivilege)
+	if !ok {
+		this.C.AjaxError("权限不足")
 		return
 	}
 
@@ -198,9 +198,9 @@ func (this *SimpleAuthRestHelper) OnGetOne(k string, t reflect.Kind) {
 
 func (this *SimpleAuthRestHelper) OnGetOneWithPrivilege(requiredPrivilege interface{}, k string, t reflect.Kind) {
 
-	e := this.C.CheckUserPrivilege(requiredPrivilege)
-	if e != nil {
-		this.C.AjaxError(e.Error())
+	ok := this.C.CheckUserPrivilege(requiredPrivilege)
+	if !ok {
+		this.C.AjaxError("权限不足")
 		return
 	}
 
@@ -253,9 +253,9 @@ func (this *SimpleAuthRestHelper) OnPut(k string, t reflect.Kind, structColsPara
 
 func (this *SimpleAuthRestHelper) OnPutWithPrivilege(requiredPrivilege interface{}, k string, t reflect.Kind, structColsParams ...*pkReflect.StructSelCols) {
 
-	e := this.C.CheckUserPrivilege(requiredPrivilege)
-	if e != nil {
-		this.C.AjaxUnAuthorized(e.Error())
+	ok := this.C.CheckUserPrivilege(requiredPrivilege)
+	if !ok {
+		this.C.AjaxUnAuthorized("权限不足")
 		return
 	}
 
@@ -306,9 +306,9 @@ func (this *SimpleAuthRestHelper) OnDelete(k string, t reflect.Kind) {
 
 func (this *SimpleAuthRestHelper) OnDeleteWithPrivilege(requiredPrivilege interface{}, k string, t reflect.Kind) {
 
-	e := this.C.CheckUserPrivilege(requiredPrivilege)
-	if e != nil {
-		this.C.AjaxError(e.Error())
+	ok := this.C.CheckUserPrivilege(requiredPrivilege)
+	if !ok {
+		this.C.AjaxError("权限不足")
 		return
 	}
 

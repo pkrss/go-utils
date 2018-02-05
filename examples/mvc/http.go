@@ -71,7 +71,7 @@ func main() {
 	profile.SetMyGetString(conf.GetString)
 
 	pkRouters.AddRouter("/{id:\\d+}/test1", &MainController{}, "get:Test1")
-	r := pkRouters.AddRouterOptSlash("/", &MainController{})
+	pkRouters.AddRouterOptSlash("/", &MainController{})
 	pkRouters.AddRouter("/conf", &MainController{}, "get:Conf")
 
 	// access: http://localhost:8080/s/
@@ -82,5 +82,5 @@ func main() {
 	port := profile.ProfileReadString("httpport", "8080")
 	localAddr := "127.0.0.1:" + port // 0.0.0.0
 	log.Printf("Server bind in %s\n", localAddr)
-	log.Fatal(http.ListenAndServe(localAddr, r))
+	log.Fatal(http.ListenAndServe(localAddr, pkRouters.GetApp()))
 }

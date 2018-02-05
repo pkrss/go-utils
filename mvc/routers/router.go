@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/pkrss/go-utils/mvc/controllers"
+	pkReflect "github.com/pkrss/go-utils/reflect"
 )
 
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
@@ -52,10 +53,13 @@ func (this *Route) Handler(w http.ResponseWriter, r *http.Request, urlPathParame
 
 	objType := reflect.New(this.ContollerType)
 	obj := objType.Elem().Addr().Interface().(controllers.ControllerInterface)
+
+	pkReflect.CopyStruct(objType.Elem().Addr().Interface(), this.ContollerObj)
+	// obj.CloneAttribute(this.ContollerObj)
+
 	obj.SetResponseWriter(w)
 	obj.SetRequest(r)
 	obj.SetUrlParameters(urlPathParameters)
-	obj.CloneAttribute(this.ContollerObj)
 	obj.OnPrepare()
 
 	m := objType.MethodByName(methodName)
