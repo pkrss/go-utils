@@ -70,8 +70,8 @@ func main() {
 	var oAuthApp OAuthApp
 	dao = baseOrm.CreateBaseDao(&oAuthApp)
 
-	// testMakeSlice()
-	// testFindOne()
+	testMakeSlice()
+	testFindOne()
 	testFindList()
 
 }

@@ -31,14 +31,19 @@ func addHandle(pattern string, c controllers.ControllerInterface, methodStr stri
 
 var app *mux.Router
 
+func getApp() *mux.Router {
+	if app == nil {
+		app = mux.NewRouter()
+	}
+	return app
+}
+
 /*
 	pattern: "/user/{name:[a-z]+}/profile"
 */
 func AddRouter(pattern string, c controllers.ControllerInterface, methodStrs ...string) http.Handler {
 
-	if app == nil {
-		app = mux.NewRouter()
-	}
+	app := getApp()
 
 	methodStr := ""
 	if len(methodStrs) > 0 {
@@ -59,8 +64,12 @@ func AddRouter(pattern string, c controllers.ControllerInterface, methodStrs ...
 }
 
 func SetStaticPath(urlPattern string, fileLocalDir string) http.Handler {
+
+	app := getApp()
+
 	fsh := http.FileServer(http.Dir(fileLocalDir))
 	fsh = http.StripPrefix(urlPattern, fsh)
-	app.Handle(urlPattern, fsh)
+	app.PathPrefix(urlPattern).Handler(fsh)
+
 	return app
 }
