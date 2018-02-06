@@ -1,8 +1,9 @@
 package pqsql
 
 import (
-	"os"
 	"regexp"
+
+	"github.com/pkrss/go-utils/profile"
 
 	"github.com/go-pg/pg"
 )
@@ -15,11 +16,12 @@ var Db *pg.DB
 // }
 
 func CreatePgSql() *pg.DB {
-	dbuser := os.Getenv("MY_DB_PGSQL_USER")
-	dbpsw := os.Getenv("MY_DB_PGSQL_PASSWORD")
+
+	dbuser := profile.ProfileReadString("MY_DB_PGSQL_USER")
+	dbpsw := profile.ProfileReadString("MY_DB_PGSQL_PASSWORD")
 
 	// jdbc:postgresql://domain:port/dbname?autoReconnect=true&useUnicode=true&characterEncoding=utf-8
-	dbUrl := os.Getenv("MY_DB_PGSQL_URL")
+	dbUrl := profile.ProfileReadString("MY_DB_PGSQL_URL")
 
 	reg := regexp.MustCompile(`://([^:]+):(\d+)/([^\?]+)`) // (`://[^\:]+:\d+/[^\?]+`)
 	ss := reg.FindStringSubmatch(dbUrl)
