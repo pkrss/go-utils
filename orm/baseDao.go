@@ -122,16 +122,23 @@ func (this *BaseDao) UpdateByFilter(ob BaseModelInterface, col string, val inter
 		return errors.New("No fields need update!")
 	}
 
-	keys := pkContainer.MapKeys(dbField2Values)
-	values := pkContainer.MapValues(dbField2Values)
+	values := make([]interface{}, c)
 
 	sql := "UPDATE " + ob.TableName() + " SET "
-	for i := 0; i < c; i++ {
-		sql += keys[i] + "=?"
-		if i != c-1 {
-			sql += ","
-		}
+	i := 0
+	for k, v := range dbField2Values {
+		sql += k + "=?"
+		sql += ","
+		values[i] = v
+		i++
 	}
+
+	if strings.HasSuffix(sql, ",") {
+		sql = sql[0 : len(sql)-1]
+	}
+
+	sql += " WHERE " + col + "=" + "?"
+	values = append(values, val)
 
 	return this.OrmAdapter.ExecSql(sql, values...)
 }

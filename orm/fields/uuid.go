@@ -49,12 +49,58 @@ func (this *UUID) String() string {
 	return this.Value()
 }
 
+// for github.com/go-pg
 func (this *UUID) Scan(src interface{}) error {
 	switch d := src.(type) {
 	case []byte:
 		src = string(d)
 	}
 	return this.SetRaw(src)
+}
+
+// for github.com/go-pg
+func (this UUID) AppendValue(b []byte, quote int) ([]byte, error) {
+	s := string(this)
+	if quote == 2 {
+		b = append(b, '"')
+	} else if quote == 1 {
+		b = append(b, '\'')
+	}
+
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+
+		if c == '\000' {
+			continue
+		}
+
+		if quote >= 1 {
+			if c == '\'' {
+				b = append(b, '\'', '\'')
+				continue
+			}
+		}
+
+		if quote == 2 {
+			if c == '"' {
+				b = append(b, '\\', '"')
+				continue
+			}
+			if c == '\\' {
+				b = append(b, '\\', '\\')
+				continue
+			}
+		}
+
+		b = append(b, c)
+	}
+
+	if quote >= 2 {
+		b = append(b, '"')
+	} else if quote == 1 {
+		b = append(b, '\'')
+	}
+	return b, nil
 }
 
 func (this *UUID) SetRaw(value interface{}) error {

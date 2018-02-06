@@ -72,6 +72,7 @@ func (e *JsonTime) String() string {
 	return t.Format(time.RFC3339)
 }
 
+// for github.com/go-pg
 func (this *JsonTime) Scan(value interface{}) error {
 	switch d := value.(type) {
 	case []byte:
@@ -80,7 +81,8 @@ func (this *JsonTime) Scan(value interface{}) error {
 	switch d := value.(type) {
 	case string:
 		if len(d) > 0 {
-			t, _ := time.ParseInLocation("2006-01-02 15:04:05", d, time.Local)
+			// t, _ := time.ParseInLocation("2006-01-02 15:04:05", d, time.Local)
+			t, _ := time.Parse("2006-01-02 15:04:05", d)
 			this.Set(t)
 		}
 		break
@@ -94,6 +96,20 @@ func (this *JsonTime) Scan(value interface{}) error {
 		return fmt.Errorf("<JsonTime.Scan> unknown value `%v`", value)
 	}
 	return nil
+}
+
+// for github.com/go-pg
+func (this JsonTime) AppendValue(b []byte, quote int) ([]byte, error) {
+	tm := this.Value()
+
+	if quote == 1 {
+		b = append(b, '\'')
+	}
+	b = tm.UTC().AppendFormat(b, "2006-01-02 15:04:05")
+	if quote == 1 {
+		b = append(b, '\'')
+	}
+	return b, nil
 }
 
 func (e *JsonTime) SetRaw(value interface{}) error {

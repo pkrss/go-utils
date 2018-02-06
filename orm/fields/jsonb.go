@@ -1,6 +1,7 @@
 package fields
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 )
@@ -25,6 +26,98 @@ func (j *JsonbField) String() string {
 	return j.Value()
 }
 
+// for github.com/go-pg
+type Parser struct {
+	b []byte
+}
+
+func NewParse(b []byte) *Parser {
+	return &Parser{
+		b: b,
+	}
+}
+
+func (p *Parser) Valid() bool {
+	return len(p.b) > 0
+}
+func (p *Parser) Advance() {
+	p.b = p.b[1:]
+}
+
+func (p *Parser) Peek() byte {
+	if p.Valid() {
+		return p.b[0]
+	}
+	return 0
+}
+func (p *Parser) Skip(c byte) bool {
+	if p.Peek() == c {
+		p.Advance()
+		return true
+	}
+	return false
+}
+func (p *Parser) Read() byte {
+	if p.Valid() {
+		c := p.b[0]
+		p.Skip(c)
+		return c
+	}
+	return 0
+}
+func (p *Parser) SkipBytes(b []byte) bool {
+	if len(b) > len(p.b) {
+		return false
+	}
+	if !bytes.Equal(p.b[:len(b)], b) {
+		return false
+	}
+	p.b = p.b[len(b):]
+	return true
+}
+
+// for github.com/go-pg
+func (this JsonbField) AppendValue(b []byte, quote int) ([]byte, error) {
+
+	jsonb := []byte(string(this))
+	if quote == 1 {
+		b = append(b, '\'')
+	}
+
+	p := NewParse(jsonb)
+	for p.Valid() {
+		c := p.Read()
+		switch c {
+		case '\'':
+			if quote == 1 {
+				b = append(b, '\'', '\'')
+			} else {
+				b = append(b, '\'')
+			}
+		case '\000':
+			continue
+		case '\\':
+			if p.SkipBytes([]byte("u0000")) {
+				b = append(b, "\\\\u0000"...)
+			} else {
+				b = append(b, '\\')
+				if p.Valid() {
+					b = append(b, p.Read())
+				}
+			}
+		default:
+			b = append(b, c)
+		}
+	}
+
+	if quote == 1 {
+		b = append(b, '\'')
+	}
+
+	return b, nil
+}
+
+// for github.com/go-pg
 func (this *JsonbField) Scan(src interface{}) error {
 	switch d := src.(type) {
 	case []byte:

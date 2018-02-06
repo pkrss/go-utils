@@ -2,6 +2,7 @@ package fields
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/pkrss/go-utils/types"
 )
@@ -54,12 +55,40 @@ func (this *BigIntArray) String() string {
 	return types.Int64ArrayToString(BigIntArray2IntArray(this))
 }
 
+// for github.com/go-pg
 func (this *BigIntArray) Scan(src interface{}) error {
 	switch d := src.(type) {
 	case []byte:
 		src = string(d)
 	}
 	return this.SetRaw(src)
+}
+
+// for github.com/go-pg
+func (this BigIntArray) AppendValue(b []byte, quote int) ([]byte, error) {
+
+	ints := []int64(this)
+
+	if quote == 1 {
+		b = append(b, '\'')
+	}
+
+	b = append(b, '{')
+	for _, n := range ints {
+		b = strconv.AppendInt(b, n, 10)
+		b = append(b, ',')
+	}
+	if len(ints) > 0 {
+		b[len(b)-1] = '}' // Replace trailing comma.
+	} else {
+		b = append(b, '}')
+	}
+
+	if quote == 1 {
+		b = append(b, '\'')
+	}
+
+	return b, nil
 }
 
 func (this *BigIntArray) SetRaw(value interface{}) error {

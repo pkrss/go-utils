@@ -9,6 +9,12 @@ func StringFromCamelCase(str string) string {
 	var b byte
 	for i := 0; i < c; i++ {
 		b = str[i]
+		if i == 0 {
+			if b >= 'A' && b <= 'Z' {
+				s += string(b - 'a' + 'A')
+				continue
+			}
+		}
 		if b == '_' {
 			i++
 			if i >= c {
@@ -35,7 +41,9 @@ func StringToCamelCase(str string) string {
 	for i := 0; i < c; i++ {
 		b = str[i]
 		if b >= 'A' && b <= 'Z' {
-			s += "_"
+			if i > 0 {
+				s += "_"
+			}
 			s += string((b - 'A' + 'a'))
 		} else {
 			s += string(b)
