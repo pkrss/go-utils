@@ -20,7 +20,7 @@ func GetStructFieldToString(ob interface{}, field string, caseSensitive ...bool)
 func GetStructFieldValue(v interface{}, field string, caseSensitive ...bool) interface{} {
 
 	val := GetStructField(v, field, caseSensitive...)
-	if !val.IsValid() || val.IsNil() {
+	if !val.IsValid() {
 		return nil
 	}
 	return val.Interface()
@@ -28,8 +28,8 @@ func GetStructFieldValue(v interface{}, field string, caseSensitive ...bool) int
 
 func GetStructFieldValueSimple(v interface{}, field string, caseSensitive bool) interface{} {
 
-	val := GetStructFieldSimple(v, field, caseSensitive)
-	if !val.IsValid() || val.IsNil() {
+	val := GetStructFieldSimple(reflect.ValueOf(v), field, caseSensitive)
+	if !val.IsValid() {
 		return nil
 	}
 	return val.Interface()
@@ -55,7 +55,7 @@ func GetStructField(v interface{}, field string, caseSensitive ...bool) reflect.
 		k := ks[i]
 
 		ret = GetStructFieldSimple(ret, k, caseS)
-		if !ret.IsValid() || ret.IsNil() {
+		if !ret.IsValid() {
 			break
 		}
 
@@ -67,13 +67,11 @@ func GetStructField(v interface{}, field string, caseSensitive ...bool) reflect.
 	return reflect.Value{}
 }
 
-func GetStructFieldSimple(v interface{}, field string, caseSensitive bool) reflect.Value {
+func GetStructFieldSimple(val reflect.Value, field string, caseSensitive bool) reflect.Value {
 
-	if v == nil || field == "" {
+	if !val.IsValid() || field == "" {
 		return reflect.Value{}
 	}
-
-	val := reflect.ValueOf(v)
 
 	switch val.Kind() {
 	case reflect.Ptr:
@@ -127,10 +125,27 @@ func GetStructFieldName2ValueMap(v interface{}, structColsParams ...*StructSelCo
 }
 
 func GetStructFieldMap(v interface{}, structColsParams ...*StructSelCols) (ret map[string]reflect.Value) {
-	return GetStructFieldMap2(v, nil, structColsParams...)
+	m := GetStructFieldInfoMap(v, structColsParams...)
+	if m == nil {
+		return nil
+	}
+	ret = make(map[string]reflect.Value, 0)
+	for k, v := range m {
+		ret[k] = v.Val
+	}
+	return ret
 }
 
-func GetStructFieldMap2(v interface{}, ret map[string]reflect.Value, structColsParams ...*StructSelCols) map[string]reflect.Value {
+type FieldInfo struct {
+	Tag reflect.StructTag
+	Val reflect.Value
+}
+
+func GetStructFieldInfoMap(v interface{}, structColsParams ...*StructSelCols) (ret map[string]FieldInfo) {
+	return GetStructFieldInfoMap2(v, nil, structColsParams...)
+}
+
+func GetStructFieldInfoMap2(v interface{}, ret map[string]FieldInfo, structColsParams ...*StructSelCols) map[string]FieldInfo {
 
 	if v == nil {
 		return nil
@@ -143,7 +158,7 @@ func GetStructFieldMap2(v interface{}, ret map[string]reflect.Value, structColsP
 		val = val.Elem()
 	}
 
-	ret = make(map[string]reflect.Value)
+	ret = make(map[string]FieldInfo)
 
 	var cols []string
 	var excludeCols []string
@@ -153,10 +168,11 @@ func GetStructFieldMap2(v interface{}, ret map[string]reflect.Value, structColsP
 		excludeCols = structColsParams[0].ExcludeCols
 	}
 
-	c := val.NumField()
 	colsCount := len(cols)
 	excludeColsCount := len(excludeCols)
 	var f bool
+
+	c := val.NumField()
 	for i := 0; i < c; i++ {
 		valueField := val.Field(i)
 		typeField := val.Type().Field(i)
@@ -192,51 +208,7 @@ func GetStructFieldMap2(v interface{}, ret map[string]reflect.Value, structColsP
 		}
 
 		if typeField.Anonymous {
-			GetStructFieldMap2(valueField.Interface(), ret, structColsParams...)
-			continue
-		}
-
-		ret[s] = valueField // .Interface()
-
-		// tag := typeField.Tag
-		// fmt.Printf("Field Name: %s,\t Field Value: %v,\t Tag Value: %s\n", typeField.Name, valueField.Interface(), tag.Get("tag_name"))
-	}
-	return ret
-}
-
-type FieldInfo struct {
-	Tag reflect.StructTag
-	Val reflect.Value
-}
-
-func GetStructFieldInfoMap(v interface{}) (ret map[string]FieldInfo) {
-	return GetStructFieldInfoMap2(v, nil)
-}
-
-func GetStructFieldInfoMap2(v interface{}, ret map[string]FieldInfo) map[string]FieldInfo {
-
-	if v == nil {
-		return nil
-	}
-
-	val := reflect.ValueOf(v)
-
-	switch val.Kind() {
-	case reflect.Ptr:
-		val = val.Elem()
-	}
-
-	ret = make(map[string]FieldInfo)
-
-	c := val.NumField()
-	for i := 0; i < c; i++ {
-		valueField := val.Field(i)
-		typeField := val.Type().Field(i)
-
-		s := typeField.Name
-
-		if typeField.Anonymous {
-			GetStructFieldInfoMap2(valueField.Interface(), ret)
+			GetStructFieldInfoMap2(valueField.Interface(), ret, structColsParams...)
 			continue
 		}
 
@@ -250,7 +222,7 @@ func GetStructFieldInfoMap2(v interface{}, ret map[string]FieldInfo) map[string]
 
 func SetStructFieldValue(obj interface{}, field string, v interface{}, caseSensitive ...bool) bool {
 	val := GetStructField(obj, field, caseSensitive...)
-	if val.IsNil() || !val.IsValid() || !val.CanSet() {
+	if !val.IsValid() || !val.CanSet() {
 		return false
 	}
 

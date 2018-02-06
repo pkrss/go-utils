@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/pkrss/go-utils/beans"
-
-	pkContainer "github.com/pkrss/go-utils/container"
+	"github.com/pkrss/go-utils/orm/inner"
 	pkReflect "github.com/pkrss/go-utils/reflect"
+	pkStrings "github.com/pkrss/go-utils/strings"
 )
 
 type BaseDaoInterface interface {
@@ -98,6 +98,7 @@ func (this *BaseDao) FindOneByFilter(col string, val interface{}, structColsPara
 		selSql += " FROM " + obj.TableName()
 	}
 
+	col = pkStrings.StringToCamelCase(col)
 	sql := selSql + " WHERE " + col + " = ?"
 
 	err = this.OrmAdapter.QueryOneBySql(obj, sql, val)
@@ -116,7 +117,7 @@ func (this *BaseDao) FindOneByFilter(col string, val interface{}, structColsPara
 }
 
 func (this *BaseDao) UpdateByFilter(ob BaseModelInterface, col string, val interface{}, structColsParams ...*pkReflect.StructSelCols) error {
-	dbField2Values := getObDbFieldsAndValues(ob, structColsParams...)
+	dbField2Values := inner.GetStructDbFieldsAndValues(ob, true, structColsParams...)
 	c := len(dbField2Values)
 	if c == 0 {
 		return errors.New("No fields need update!")
@@ -137,6 +138,8 @@ func (this *BaseDao) UpdateByFilter(ob BaseModelInterface, col string, val inter
 		sql = sql[0 : len(sql)-1]
 	}
 
+	col = pkStrings.StringToCamelCase(col)
+
 	sql += " WHERE " + col + "=" + "?"
 	values = append(values, val)
 
@@ -148,7 +151,8 @@ func (this *BaseDao) DeleteOneById(id interface{}) error {
 }
 
 func (this *BaseDao) DeleteByFilter(col string, val interface{}) error {
-	sql := "DELETE " + this.ObjModel.TableName() + " WHERE " + col + " = ?"
+	col = pkStrings.StringToCamelCase(col)
+	sql := "DELETE FROM " + this.ObjModel.TableName() + " WHERE " + col + " = ?"
 	return this.OrmAdapter.ExecSql(sql, val)
 }
 
@@ -157,20 +161,29 @@ func (this *BaseDao) UpdateById(ob BaseModelInterface, id interface{}, structCol
 }
 func (this *BaseDao) Insert(ob BaseModelInterface, structColsParams ...*pkReflect.StructSelCols) error {
 
-	dbField2Values := getObDbFieldsAndValues(ob, structColsParams...)
+	dbField2Values := inner.GetStructDbFieldsAndValues(ob, true, structColsParams...)
 	c := len(dbField2Values)
 	if c == 0 {
 		return errors.New("No fields need insert!")
 	}
 
-	keys := pkContainer.MapKeys(dbField2Values)
-	values := pkContainer.MapValues(dbField2Values)
-	t := make([]string, c)
-	for i := 0; i < c; i++ {
-		t[i] = "?"
+	sqlKeys := ""
+	sqlKeys2 := ""
+	values := make([]interface{}, c)
+	i := 0
+	for k, v := range dbField2Values {
+		sqlKeys += k + ","
+		sqlKeys2 += "?,"
+		values[i] = v
+		i++
 	}
 
-	sql := "INSERT INTO " + ob.TableName() + " (" + strings.Join(keys, ",") + ") VALUES(" + strings.Join(t, ",") + ")"
+	if strings.HasSuffix(sqlKeys, ",") {
+		sqlKeys = sqlKeys[0 : len(sqlKeys)-1]
+		sqlKeys2 = sqlKeys2[0 : len(sqlKeys2)-1]
+	}
+
+	sql := "INSERT INTO " + ob.TableName() + " (" + sqlKeys + ") VALUES(" + sqlKeys2 + ")"
 
 	if ob.IdColumn() != "" {
 
@@ -187,7 +200,6 @@ func (this *BaseDao) Insert(ob BaseModelInterface, structColsParams ...*pkReflec
 			// 	pkReflect.SetStructFieldValue(ob, ob.IdColumn(), idVal.Interface())
 			// }
 			return e
-
 		}
 	}
 

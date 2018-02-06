@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/pkrss/go-utils/examples/common"
 	"github.com/pkrss/go-utils/reflect"
 )
 
@@ -23,6 +24,13 @@ func testCopy() {
 	log.Printf("aa1=%v\n", aa1)
 }
 
+func testGetField() {
+	ob := common.CreateSampleOAuthApp()
+	idVal := reflect.GetStructField(ob, ob.IdColumn(), false)
+	log.Printf("testGetField()=%v\n", idVal.IsValid())
+}
+
 func main() {
+	testGetField()
 	testCopy()
 }

@@ -222,11 +222,17 @@ func (this *Controller) GetPageableFromRequest() *pkBeans.Pageable {
 		limit = this.GetInt("limit", -1)
 	}
 	if limit == -1 {
+		limit = this.GetInt("size", -1)
+	}
+	if limit == -1 {
 		limit = 20
 	}
 	pageable.PageSize = limit
 
-	pageNumber = this.GetInt("pageNumber", -1)
+	pageNumber = this.GetInt("page", -1)
+	if pageNumber == -1 {
+		pageNumber = this.GetInt("pageNumber", -1)
+	}
 	if pageNumber == -1 {
 		offset := this.GetInt("offset", -1)
 		if offset == -1 {

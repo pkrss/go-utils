@@ -1,7 +1,7 @@
 package strings
 
 /**
-	"aB" = StringFromCamelCase("a_b")
+	"ABcDef" => "a_bc_def"
 **/
 func StringFromCamelCase(str string) string {
 	c := len(str)
@@ -32,7 +32,7 @@ func StringFromCamelCase(str string) string {
 }
 
 /**
-	"a_b" = StringToCamelCase("aB")
+	"ab_c_d_ef" => "AbCDef"
 **/
 func StringToCamelCase(str string) string {
 	c := len(str)
@@ -46,6 +46,11 @@ func StringToCamelCase(str string) string {
 			}
 			s += string((b - 'A' + 'a'))
 		} else {
+			if i == 0 {
+				if b >= 'A' && b <= 'Z' {
+					b = b - 'A' + 'a'
+				}
+			}
 			s += string(b)
 		}
 	}
