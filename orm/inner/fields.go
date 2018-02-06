@@ -13,13 +13,44 @@ type IsNullInterface interface {
 	IsNil() bool
 }
 
-func GetStructDbFieldsAndValues(ob interface{}, writeMode bool, structColsParams ...*pkReflect.StructSelCols) map[string]interface{} {
+func GetStructDbFieldsAndValues(ob interface{}, idColumn string, writeMode bool, structColsParams ...*pkReflect.StructSelCols) map[string]interface{} {
 	selCols := pkReflect.GetStructFieldInfoMap(ob, structColsParams...)
 	ret := make(map[string]interface{}, 0)
 	for k, v := range selCols {
 		dbKey := pkStrings.StringToCamelCase(k)
 
 		val := v.Val
+
+		if idColumn == dbKey {
+			valTmp := val
+			noInsertCol := false
+
+			switch v2 := valTmp.Interface().(type) {
+			case int:
+				noInsertCol = (v2 == 0)
+			case int64:
+				noInsertCol = (v2 == 0)
+			case string:
+				noInsertCol = (v2 == "")
+			}
+
+			if noInsertCol {
+				continue
+			}
+
+			if valTmp.CanAddr() {
+				valTmp = valTmp.Addr()
+			}
+
+			switch v2 := valTmp.Interface().(type) {
+			case IsNullInterface:
+				noInsertCol = v2.IsNil()
+			}
+
+			if noInsertCol {
+				continue
+			}
+		}
 
 		ormStr := v.Tag.Get("orm")
 		if ormStr != "" {
@@ -31,11 +62,14 @@ func GetStructDbFieldsAndValues(ob interface{}, writeMode bool, structColsParams
 			if valTmp.CanAddr() {
 				valTmp = valTmp.Addr()
 			}
-			switch v := valTmp.Interface().(type) {
-			case IsNullInterface:
-				isNil = v.IsNil()
-			}
+
 			noInsertCol := false
+
+			switch v2 := valTmp.Interface().(type) {
+			case IsNullInterface:
+				isNil = v2.IsNil()
+			}
+
 			for _, s := range ss {
 				if s == "ro" {
 					if writeMode {
@@ -54,6 +88,7 @@ func GetStructDbFieldsAndValues(ob interface{}, writeMode bool, structColsParams
 					val = reflect.ValueOf(time.Now())
 				}
 			}
+
 			if noInsertCol {
 				continue
 			}

@@ -117,7 +117,7 @@ func (this *BaseDao) FindOneByFilter(col string, val interface{}, structColsPara
 }
 
 func (this *BaseDao) UpdateByFilter(ob BaseModelInterface, col string, val interface{}, structColsParams ...*pkReflect.StructSelCols) error {
-	dbField2Values := inner.GetStructDbFieldsAndValues(ob, true, structColsParams...)
+	dbField2Values := inner.GetStructDbFieldsAndValues(ob, ob.IdColumn(), true, structColsParams...)
 	c := len(dbField2Values)
 	if c == 0 {
 		return errors.New("No fields need update!")
@@ -161,7 +161,7 @@ func (this *BaseDao) UpdateById(ob BaseModelInterface, id interface{}, structCol
 }
 func (this *BaseDao) Insert(ob BaseModelInterface, structColsParams ...*pkReflect.StructSelCols) error {
 
-	dbField2Values := inner.GetStructDbFieldsAndValues(ob, true, structColsParams...)
+	dbField2Values := inner.GetStructDbFieldsAndValues(ob, ob.IdColumn(), true, structColsParams...)
 	c := len(dbField2Values)
 	if c == 0 {
 		return errors.New("No fields need insert!")
