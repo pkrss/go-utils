@@ -7,3 +7,7 @@ some go utils helper wrapper
 1. have authorize support
 
 sample see examples/mvc
+
+== about us ==
+
+see blogs: https://blogs.pkstate.com
