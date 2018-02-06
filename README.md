@@ -24,6 +24,10 @@ sample see examples/.../conf
 
 ...
 
+== api ==
+
+[see wiki](https://github.com/pkrss/go-utils/wiki)
+
 == about us ==
 
 see blogs: https://blogs.pkstate.com
