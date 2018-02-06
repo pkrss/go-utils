@@ -18,7 +18,7 @@ func CreatePgSql() *pg.DB {
 	dbuser := os.Getenv("MY_DB_PGSQL_USER")
 	dbpsw := os.Getenv("MY_DB_PGSQL_PASSWORD")
 
-	// jdbc:postgresql://rm-bp1waaqgdq6929vswo.pg.rds.aliyuncs.com:3432/sx98?autoReconnect=true&useUnicode=true&characterEncoding=utf-8
+	// jdbc:postgresql://domain:port/dbname?autoReconnect=true&useUnicode=true&characterEncoding=utf-8
 	dbUrl := os.Getenv("MY_DB_PGSQL_URL")
 
 	reg := regexp.MustCompile(`://([^:]+):(\d+)/([^\?]+)`) // (`://[^\:]+:\d+/[^\?]+`)
