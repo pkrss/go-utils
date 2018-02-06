@@ -43,7 +43,8 @@ func GetStructDbFieldsAndValues(ob interface{}, writeMode bool, structColsParams
 					}
 				} else if s == "null" {
 					if isNil {
-						val = reflect.ValueOf(nil)
+						ret[dbKey] = nil
+						noInsertCol = true
 					}
 				} else if s == "auto_now_add" {
 					if isNil {
