@@ -23,6 +23,16 @@ func (this *OAuthApp) TableName() string {
 	return "myzc_oauth_app"
 }
 
+// complex multile table query sample
+// func (this *OAuthApp) IdColumn() string {
+// 	return "a.id"
+// }
+
+// func (this *OAuthApp) SelSql() string {
+// 	return "SELECT a.*,b.nick_name AS user_nick_name,c.title AS role_title FROM hx_admin_user_role AS a" +
+// 		" LEFT JOIN myzc_oauth_app AS b ON a.xxx = b.id LEFT JOIN hx_admin_role AS c ON c.id = a.xxxx"
+// }
+
 func CreateSampleOAuthApp() *OAuthApp {
 	return &OAuthApp{Code: "TestCode", Title: "TestTitle", AppId: "TestAppId", AppSecurityKey: "TestAppSecurityKey", AppOauthScope: "TestAppOauthScope", AppBaseUrl: "TestAppBaseUrl",
 		AccessToken: "TestAccessToken"}

@@ -117,7 +117,9 @@ func (this *BaseDao) FindOneByFilter(col string, val interface{}, structColsPara
 }
 
 func (this *BaseDao) UpdateByFilter(ob BaseModelInterface, col string, val interface{}, structColsParams ...*pkReflect.StructSelCols) error {
-	dbField2Values := inner.GetStructDbFieldsAndValues(ob, ob.IdColumn(), true, structColsParams...)
+	idCol := this.getRealIdCol(ob.IdColumn())
+
+	dbField2Values := inner.GetStructDbFieldsAndValues(ob, idCol, true, structColsParams...)
 	c := len(dbField2Values)
 	if c == 0 {
 		return errors.New("No fields need update!")
@@ -147,7 +149,8 @@ func (this *BaseDao) UpdateByFilter(ob BaseModelInterface, col string, val inter
 }
 
 func (this *BaseDao) DeleteOneById(id interface{}) error {
-	return this.DeleteByFilter(this.ObjModel.IdColumn(), id)
+	idCol := this.getRealIdCol(this.ObjModel.IdColumn())
+	return this.DeleteByFilter(idCol, id)
 }
 
 func (this *BaseDao) DeleteByFilter(col string, val interface{}) error {
@@ -158,6 +161,16 @@ func (this *BaseDao) DeleteByFilter(col string, val interface{}) error {
 
 func (this *BaseDao) UpdateById(ob BaseModelInterface, id interface{}, structColsParams ...*pkReflect.StructSelCols) error {
 	return this.UpdateByFilter(ob, ob.IdColumn(), id, structColsParams...)
+}
+func (this *BaseDao) getRealIdCol(idColumn string) string {
+	if strings.Contains(idColumn, ".") {
+		ss := strings.Split(idColumn, ".")
+		c := len(ss)
+		if c > 0 {
+			idColumn = ss[c-1]
+		}
+	}
+	return idColumn
 }
 func (this *BaseDao) Insert(ob BaseModelInterface, structColsParams ...*pkReflect.StructSelCols) error {
 
@@ -185,19 +198,21 @@ func (this *BaseDao) Insert(ob BaseModelInterface, structColsParams ...*pkReflec
 
 	sql := "INSERT INTO " + ob.TableName() + " (" + sqlKeys + ") VALUES(" + sqlKeys2 + ")"
 
-	if ob.IdColumn() != "" {
+	idCol := this.getRealIdCol(ob.IdColumn())
+
+	if idCol != "" {
 
 		returnSql := this.OrmAdapter.SqlReturnSql()
-		idVal := pkReflect.GetStructField(ob, ob.IdColumn(), false)
+		idVal := pkReflect.GetStructField(ob, idCol, false)
 
 		if returnSql != "" && idVal.IsValid() {
-			returnSql = strings.Replace(returnSql, "{id}", ob.IdColumn(), -1)
+			returnSql = strings.Replace(returnSql, "{id}", idCol, -1)
 
 			sql += returnSql
 
 			e := this.OrmAdapter.QueryOneBySql(idVal.Addr().Interface(), sql, values...)
 			// if e == nil {
-			// 	pkReflect.SetStructFieldValue(ob, ob.IdColumn(), idVal.Interface())
+			// 	pkReflect.SetStructFieldValue(ob, idCol, idVal.Interface())
 			// }
 			return e
 		}
