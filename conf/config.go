@@ -64,6 +64,14 @@ func LoadConfigFile(ob interface{}, confFile string) error {
 }
 
 func GetString(key string) string {
+	if key == "" {
+		return ""
+	}
+	v := os.Getenv(key)
+	if v != "" {
+		return v
+	}
+
 	if Config == nil {
 		return ""
 	}
