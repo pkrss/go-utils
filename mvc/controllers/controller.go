@@ -217,17 +217,17 @@ func (this *Controller) GetPageableFromRequest() *pkBeans.Pageable {
 	var pageable pkBeans.Pageable
 	var limit, pageNumber int
 
-	limit = this.GetInt("pageSize", -1)
+	limit = this.GetInt("size", -1)
 	if limit == -1 {
 		limit = this.GetInt("limit", -1)
 	}
 	if limit == -1 {
-		limit = this.GetInt("size", -1)
+		limit = this.GetInt("pageSize", -1)
 	}
 	if limit == -1 {
 		limit = 20
 	}
-	pageable.PageSize = limit
+	pageable.Size = limit
 
 	pageNumber = this.GetInt("page", -1)
 	if pageNumber == -1 {
@@ -242,14 +242,14 @@ func (this *Controller) GetPageableFromRequest() *pkBeans.Pageable {
 			pageable.OffsetOldField = offset
 		}
 		if limit > 0 {
-			pageNumber = 1 + (offset+limit-1)/limit
+			pageNumber = (offset + limit - 1) / limit
 		}
 	}
-	if pageNumber < 1 {
-		pageNumber = 1
+	if pageNumber < 0 {
+		pageNumber = 0
 	}
 
-	pageable.PageNumber = pageNumber
+	pageable.Page = pageNumber
 
 	condArr := make(map[string]string, 0)
 
@@ -294,7 +294,7 @@ func (this *Controller) AjaxDbRecord(ob interface{}, oldCodeFormat ...bool) {
 func (this *Controller) AjaxDbList(pageable *pkBeans.Pageable, list interface{}, listSize int, total int64, oldCodeFormat ...bool) {
 
 	var page pkBeans.Page
-	if pageable.PageNumber == 1 {
+	if pageable.Page == 0 {
 		page.First = true
 	} else {
 		page.First = false
@@ -302,18 +302,18 @@ func (this *Controller) AjaxDbList(pageable *pkBeans.Pageable, list interface{},
 
 	total2 := int(total)
 
-	page.Number = pageable.PageNumber
+	page.Number = pageable.Page
 	page.NumberOfElements = listSize
 	page.Content = list
 	page.TotalElements = total2
-	page.Size = pageable.PageSize
+	page.Size = pageable.Size
 	if page.Size > 0 {
 		page.TotalPages = (total2 + page.Size - 1) / page.Size
 	} else {
 		page.TotalPages = 0
 	}
 
-	if pageable.PageNumber >= page.TotalPages-1 {
+	if pageable.Page >= page.TotalPages-1 {
 		page.Last = true
 	} else {
 		page.Last = false
@@ -330,7 +330,7 @@ func (this *Controller) AjaxDbList(pageable *pkBeans.Pageable, list interface{},
 		rsp := make(map[string]interface{}, 0)
 		rsp["list"] = page.Content
 		rsp["listSize"] = page.NumberOfElements
-		rsp["offset"] = (page.Number - 1) * page.Size
+		rsp["offset"] = page.Number * page.Size
 		rsp["limit"] = page.Size
 		rsp["totalPages"] = page.TotalElements
 		rsp["totalItemsCount"] = page.TotalElements

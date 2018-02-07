@@ -1,9 +1,9 @@
 package beans
 
 type Pageable struct {
-	PageNumber int `json:"pageNumber"` // from page number, from 1
+	Page int `json:"page"` // from page number, from 0
 
-	PageSize int `json:"pageSize"` // query limit
+	Size int `json:"size"` // query limit
 
 	CondArr map[string]string `json:"condArr"` // query conditions
 
@@ -25,14 +25,12 @@ func (this *Pageable) CalcOffsetAndLimit(total int) (ok bool, begin int, end int
 		return
 	}
 
-	limit := this.PageSize
+	limit := this.Size
 
 	if this.OffsetOldField != 0 {
 		begin = this.OffsetOldField
-	} else if this.PageNumber == 0 {
-		begin = 0
 	} else {
-		begin = (this.PageNumber - 1) * this.PageSize
+		begin = this.Page * this.Size
 	}
 
 	if limit == 0 {

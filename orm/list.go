@@ -130,21 +130,21 @@ func (this *ListRawHelper) getQueryPageablePostfix(sql string) string {
 		sql = sql + " ORDER BY " + orderBy
 	}
 
-	if pageable.PageNumber < 1 {
-		pageable.PageNumber = 1
+	if pageable.Page < 0 {
+		pageable.Page = 0
 	}
 
-	if pageable.PageSize == 0 {
-		pageable.PageSize = 20
+	if pageable.Size == 0 {
+		pageable.Size = 20
 	}
 
 	offset := pageable.OffsetOldField
 	if offset == 0 {
-		offset = (pageable.PageNumber - 1) * pageable.PageSize
+		offset = pageable.Page * pageable.Size
 	}
 
 	s := this.OrmAdapter.SqlLimitStyle()
-	slimit := strconv.Itoa(pageable.PageSize)
+	slimit := strconv.Itoa(pageable.Size)
 	soffset := strconv.Itoa(offset)
 	s = strings.Replace(s, "{limit}", slimit, -1)
 	s = strings.Replace(s, "{offset}", soffset, -1)
