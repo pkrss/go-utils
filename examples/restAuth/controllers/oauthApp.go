@@ -11,24 +11,24 @@ import (
 	pkReflect "github.com/pkrss/go-utils/reflect"
 )
 
-func CreateOAuthAppListRestController() *simple.SimpleAuthRestListCreateController {
+func CreateOAuthAppListRestController() base.ControllerInterface {
 	postStructColsParams := &pkReflect.StructSelCols{ExcludeCols: []string{"Id", "CreateTime"}}
-	params := simple.SimpleAuthRestListCreateParams{
+	params := simple.ListRestParams{
 		RecordModel: &models.OAuthApp{}, SelectListCbFun: oauthAppGetList,
 		SelectPrivilege: auth.Admin, PostPrivilege: auth.Admin, PostStructColsParams: postStructColsParams,
 	}
 
-	return simple.CreateSimpleListRestController(&params)
+	return simple.CreateListRestController(&params)
 }
 
-func CreateOAuthAppRestController() *simple.SimpleAuthRestCreateController {
+func CreateOAuthAppRestController() base.ControllerInterface {
 	putStructColsParams := &pkReflect.StructSelCols{ExcludeCols: []string{"Id", "CreateTime"}}
-	params := simple.SimpleAuthRestCreateParams{
+	params := simple.ItemRestParams{
 		RecordModel: &models.OAuthApp{}, IdUrlParam: ":id", IdType: reflect.Int64,
 		SelectPrivilege: auth.Admin, PutPrivilege: auth.Admin, PutStructColsParams: putStructColsParams, DeletePrivilege: auth.Admin,
 	}
 
-	return simple.CreateSimpleRestController(&params)
+	return simple.CreateItemRestController(&params)
 }
 
 func oauthAppGetList(listRawHelper *orm.ListRawHelper) error {

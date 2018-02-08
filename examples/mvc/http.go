@@ -20,6 +20,10 @@ func (this *MyControllerUser) TokenKey() string {
 	return "X-PKRSS-SAMPLE"
 }
 
+func (this *MyControllerUser) LoadUserToken(c pkControllers.ControllerInterface) string {
+	return ""
+}
+
 func (this *MyControllerUser) LoadTokenObj(token string) interface{} {
 	return nil // json.Unmarshal(redis.Get(token))
 }
@@ -77,7 +81,7 @@ func main() {
 	// access: http://localhost:8080/s/
 	pkRouters.SetStaticPath("/s", "s")
 
-	pkControllers.DefaultUserInterface = &MyControllerUser{}
+	pkControllers.DefaultAuthImpl = &MyControllerUser{}
 
 	port := profile.ProfileReadString("httpport", "8080")
 	localAddr := "127.0.0.1:" + port // 0.0.0.0

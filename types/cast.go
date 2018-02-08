@@ -1,25 +1,33 @@
 package types
 
 import (
+	"fmt"
+	"reflect"
 	"strconv"
 )
 
-func CastToInt64(o interface{}) int64 {
+func CastToInt64(o interface{}) (ret int64, err error) {
+	if o == nil {
+		return
+	}
+	t := reflect.ValueOf(o)
+	if t.Kind() == reflect.Ptr {
+		return CastToInt64(t.Elem().Interface())
+	}
 	switch v := o.(type) {
 	case int64:
-		return v
-	case *int64:
-		return *v
+		ret = v
 	case int:
-		return int64(v)
-	case *int:
-		return int64(*v)
+		ret = int64(v)
+	case float32:
+		ret = int64(v)
+	case float64:
+		ret = int64(v)
 	case string:
-		i, _ := strconv.ParseInt(v, 10, 64)
-		return i
-	case *string:
-		i, _ := strconv.ParseInt(*v, 10, 64)
-		return i
+		ret, err = strconv.ParseInt(v, 10, 64)
+		return
+	default:
+		err = fmt.Errorf("Unknown type to int64 error: %v %T", o, o)
 	}
-	return 0
+	return
 }

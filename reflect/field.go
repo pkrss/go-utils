@@ -195,7 +195,7 @@ func GetStructFieldInfoMap2(v interface{}, ret map[string]FieldInfo, structColsP
 		if excludeColsCount > 0 {
 			f = false
 			for j := 0; j < excludeColsCount; j++ {
-				if cols[j] == s {
+				if excludeCols[j] == s {
 					f = true
 					break
 				}

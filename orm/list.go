@@ -281,14 +281,6 @@ func (this *ListRawHelper) SelSqlListQuery(selSql string, resultListPointer inte
 	if val.Kind() != reflect.Slice {
 		return
 	}
-	c := val.Len()
-	for i := 0; i < c; i++ {
-		m := val.Index(i).Addr().Interface().(BaseModelInterface)
-		if m == nil {
-			continue
-		}
-		m.FilterValue()
-	}
 
 	return
 

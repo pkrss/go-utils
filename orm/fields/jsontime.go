@@ -2,6 +2,8 @@ package fields
 
 import (
 	"fmt"
+	"log"
+	"strings"
 	"time"
 )
 
@@ -82,7 +84,14 @@ func (this *JsonTime) Scan(value interface{}) error {
 	case string:
 		if len(d) > 0 {
 			// t, _ := time.ParseInLocation("2006-01-02 15:04:05", d, time.Local)
-			t, _ := time.Parse("2006-01-02 15:04:05", d)
+			fmt := "2006-01-02 15:04:05"
+			if len(d) > 12 && strings.ContainsAny(d[10:], "+-") {
+				fmt = "2006-01-02 15:04:05Z07"
+			}
+			t, e := time.Parse(fmt, d)
+			if e != nil {
+				log.Printf("JSONTime parse [%s] error:%s\n", d, e.Error())
+			}
 			this.Set(t)
 		}
 		break

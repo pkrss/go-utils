@@ -111,8 +111,6 @@ func (this *BaseDao) FindOneByFilter(col string, val interface{}, structColsPara
 		return nil, err
 	}
 
-	obj.FilterValue()
-
 	return obj, err
 }
 

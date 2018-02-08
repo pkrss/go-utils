@@ -9,7 +9,6 @@ import (
 
 	"github.com/pkrss/go-utils/examples/restAuth/auth"
 	"github.com/pkrss/go-utils/examples/restAuth/models"
-	base "github.com/pkrss/go-utils/mvc/controllers"
 	"github.com/pkrss/go-utils/mvc/controllers/simple"
 	"github.com/pkrss/go-utils/orm"
 	pkReflect "github.com/pkrss/go-utils/reflect"
@@ -17,22 +16,22 @@ import (
 )
 
 type UserController struct {
-	simple.SimpleAuthRestListCreateController
+	simple.ListAuthRestController
 }
 
 func (this *UserController) OnPrepare() {
 	postStructColsParams := &pkReflect.StructSelCols{
 		ExcludeCols: []string{"Id", "Password", "CreateTime"},
 	}
-	params := simple.SimpleAuthRestListCreateParams{
+	params := simple.ListRestParams{
 		RecordModel: &models.User{}, SelectListCbFun: userGetList,
 		SelectPrivilege: auth.Admin, PostPrivilege: auth.Admin, PostStructColsParams: postStructColsParams,
 		OnRestDbCbFun: userListOnRestDbCallback,
 	}
 
-	this.SimpleAuthRestListCreateController.Params = &params
-	this.SimpleAuthRestListCreateController.OnPrepare()
-	this.SimpleAuthRestController.Helper.OldCodeFormat = true
+	this.ListAuthRestController.Params = &params
+	this.ListAuthRestController.OnPrepare()
+	this.ListAuthRestController.Helper.OldCodeFormat = true
 }
 
 func userGetList(listRawHelper *orm.ListRawHelper) error {
@@ -46,7 +45,7 @@ func userGetList(listRawHelper *orm.ListRawHelper) error {
 	return nil
 }
 
-func userListOnRestDbCallback(op simple.OpType, ob interface{}, dao orm.BaseDaoInterface, c base.ControllerInterface) error {
+func userListOnRestDbCallback(op simple.ListOpType, ob interface{}, dao orm.BaseDaoInterface, c *simple.ListAuthRestController) error {
 	switch op {
 	case simple.BeforePost:
 		record := ob.(*models.User)
@@ -80,7 +79,7 @@ func userListOnRestDbCallback(op simple.OpType, ob interface{}, dao orm.BaseDaoI
 			}
 		}
 
-		userContext := c.(base.AuthControllerInterface).LoadUserContext().(*auth.UserContext)
+		userContext := c.LoadUserContext().(*auth.UserContext)
 		if newUserDomain.Role > userContext.Role {
 			return errors.New("越权操作")
 		}
@@ -100,11 +99,11 @@ func userListOnRestDbCallback(op simple.OpType, ob interface{}, dao orm.BaseDaoI
 }
 
 func (this *UserController) Get() {
-	this.SimpleAuthRestListCreateController.Get()
+	this.ListAuthRestController.Get()
 }
 
 func (this *UserController) Post() {
-	this.SimpleAuthRestListCreateController.Post()
+	this.ListAuthRestController.Post()
 }
 
 func (this *UserController) Login() {
@@ -119,26 +118,26 @@ func (this *UserController) Login() {
 }
 
 type UserIdController struct {
-	simple.SimpleAuthRestCreateController
+	simple.ItemAuthRestController
 }
 
 func (this *UserIdController) OnPrepare() {
 	putStructColsParams := &pkReflect.StructSelCols{
 		ExcludeCols: []string{"Id", "Password", "CreateTime"},
 	}
-	params := simple.SimpleAuthRestCreateParams{
+	params := simple.ItemRestParams{
 		RecordModel: &models.User{}, IdUrlParam: ":id", IdType: reflect.String,
 		PutStructColsParams: putStructColsParams, DeletePrivilege: auth.Admin,
 		OnRestDbCbFun: userOnRestDbCallback,
 	}
 
-	this.SimpleAuthRestCreateController.Params = &params
-	this.SimpleAuthRestCreateController.OnPrepare()
-	this.SimpleAuthRestController.Helper.OldCodeFormat = true
+	this.ItemAuthRestController.Params = &params
+	this.ItemAuthRestController.OnPrepare()
+	this.ItemAuthRestController.Helper.OldCodeFormat = true
 }
 
 func (this *UserIdController) Get() {
-	this.SimpleAuthRestCreateController.Get()
+	this.ItemAuthRestController.Get()
 }
 
 func (this *UserIdController) Detail() {
@@ -153,12 +152,12 @@ func (this *UserIdController) Delete() {
 	this.AjaxError("禁止该操作")
 }
 
-func userOnRestDbCallback(op simple.OpType, ob interface{}, dao orm.BaseDaoInterface, c base.ControllerInterface) error {
+func userOnRestDbCallback(op simple.ItemOpType, ob interface{}, dao orm.BaseDaoInterface, c *simple.ItemAuthRestController) error {
 	switch op {
 	case simple.AfterGet:
 		record := ob.(*models.User)
 
-		if !c.(base.AuthControllerInterface).CheckUserIsClientManagerOrSelf(record.Id.String()) {
+		if !c.CheckUserIsClientManagerOrSelf(record.Id.String()) {
 			return errors.New("无权操作!")
 		}
 
@@ -170,12 +169,12 @@ func userOnRestDbCallback(op simple.OpType, ob interface{}, dao orm.BaseDaoInter
 	case simple.BeforePut:
 		record := ob.(*models.User)
 
-		putStructColsParams := c.(*UserIdController).GetParams().PutStructColsParams
+		putStructColsParams := c.GetParams().PutStructColsParams
 
 		denyKeys := []string{"Password", "UpdateTime"}
 		putStructColsParams.ExcludeCols = append(putStructColsParams.ExcludeCols, denyKeys...)
 
-		userContext := c.(base.AuthControllerInterface).LoadUserContext().(*auth.UserContext)
+		userContext := c.LoadUserContext().(*auth.UserContext)
 		if userContext.Role >= auth.Admin {
 			// ob.Password = ""
 		} else if record.Id.String() == userContext.UserId {

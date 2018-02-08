@@ -61,7 +61,16 @@ func (this *ListAuthRestHelper) OnGetList(selSql string, cb orm.SelectListCallba
 
 	c := 0
 	if l != nil {
-		c = reflect.ValueOf(l).Elem().Len()
+		val := reflect.ValueOf(l).Elem()
+		c = val.Len()
+
+		for i := 0; i < c; i++ {
+			m := val.Index(i).Addr().Interface().(orm.BaseModelInterface)
+			if m == nil {
+				continue
+			}
+			m.FilterValue()
+		}
 	}
 	this.C.AjaxDbList(pageable, l, c, total, this.OldCodeFormat)
 }
@@ -214,6 +223,10 @@ func (this *ItemAuthRestHelper) OnGetOne(k string, t reflect.Kind) {
 		return
 	}
 
+	if ob != nil {
+		ob.FilterValue()
+	}
+
 	this.C.AjaxDbRecord(ob, this.OldCodeFormat)
 }
 
@@ -269,6 +282,10 @@ func (this *ItemAuthRestHelper) OnPut(k string, t reflect.Kind, structColsParams
 		return
 	}
 
+	if ob != nil {
+		ob.FilterValue()
+	}
+
 	this.C.AjaxDbRecord(ob, this.OldCodeFormat)
 }
 
@@ -320,6 +337,10 @@ func (this *ItemAuthRestHelper) OnDelete(k string, t reflect.Kind) {
 	if err != nil {
 		this.C.AjaxError(err.Error())
 		return
+	}
+
+	if ob != nil {
+		ob.FilterValue()
 	}
 
 	this.C.AjaxDbRecord(ob, this.OldCodeFormat)
