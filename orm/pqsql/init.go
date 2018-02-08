@@ -1,6 +1,7 @@
 package pqsql
 
 import (
+	"log"
 	"regexp"
 
 	"github.com/pkrss/go-utils/profile"
@@ -15,8 +16,15 @@ var Db *pg.DB
 // 	initSql()
 // }
 
-func CreatePgSql() *pg.DB {
+type ConnectOption struct {
+	User     string
+	Password string
+	Database string
+	SrvHost  string
+	SrvPort  string
+}
 
+func ConnectOptionFromProfile() *ConnectOption {
 	dbuser := profile.ProfileReadString("MY_DB_PGSQL_USER")
 	dbpsw := profile.ProfileReadString("MY_DB_PGSQL_PASSWORD")
 
@@ -30,13 +38,30 @@ func CreatePgSql() *pg.DB {
 	dbPort := ss[2]
 	dbName := ss[3]
 
-	// dbName = "go"
-
-	db := pg.Connect(&pg.Options{
-		User:     dbuser,
+	return &ConnectOption{User: dbuser,
 		Password: dbpsw,
 		Database: dbName,
-		Addr:     dbHost + ":" + dbPort,
+		SrvHost:  dbHost,
+		SrvPort:  dbPort,
+	}
+}
+
+func CreatePgSql(opts ...*ConnectOption) *pg.DB {
+	var opt *ConnectOption
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	if opt == nil {
+		opt = ConnectOptionFromProfile()
+	}
+
+	log.Printf("pgsql connect: %s:%s/%s\n", opt.SrvHost, opt.SrvPort, opt.Database)
+
+	db := pg.Connect(&pg.Options{
+		User:     opt.User,
+		Password: opt.Password,
+		Database: opt.Database,
+		Addr:     opt.SrvHost + ":" + opt.SrvPort,
 	})
 
 	Db = db

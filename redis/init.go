@@ -3,6 +3,7 @@ package redis
 import (
 	"errors"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,7 +19,43 @@ var cc *RedisCache
 // 	initRedis()
 // }
 
-func InitRedis() {
+type ConnectOption struct {
+	Password string
+	SrvHost  string
+	SrvPort  string
+	DbNum    int
+}
+
+func ConnectOptionFromProfile() *ConnectOption {
+	ret := ConnectOption{}
+	ret.SrvHost = profile.ProfileReadString("MY_REDIS_IP", "127.0.0.1")
+	if strings.Contains(ret.SrvHost, ":") {
+		ss := strings.Split(ret.SrvHost, ":")
+		if len(ss) > 1 {
+			ret.SrvHost = ss[0]
+			ret.SrvPort = ss[1]
+		}
+	} else {
+		ret.SrvPort = profile.ProfileReadString("MY_REDIS_PORT", "6379")
+	}
+
+	ret.Password = profile.ProfileReadString("MY_REDIS_PASSWORD")
+	ret.DbNum = profile.ProfileReadInt("MY_REDIS_DBNUM")
+
+	return &ret
+}
+
+func InitRedis(opts ...*ConnectOption) {
+
+	var opt *ConnectOption
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+
+	if opt == nil {
+		opt = ConnectOptionFromProfile()
+	}
+
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("initial redis error caught: %v\n", r)
@@ -26,20 +63,19 @@ func InitRedis() {
 		}
 	}()
 
-	con := profile.ProfileReadString("MY_REDIS_IP", "127.0.0.1")
-	if !strings.Contains(con, ":") {
-		con += ":" + profile.ProfileReadString("MY_REDIS_PORT", "6379")
-	}
+	con := opt.SrvHost
 
-	key := profile.ProfileReadString("MY_REDIS_PASSWORD")
+	if opt.SrvPort != "" {
+		con += ":" + opt.SrvPort
+	}
 
 	constr := `{"conn":"` + con + `"`
 
-	if len(key) > 0 {
-		constr += `,"password":"` + key + `"`
+	if opt.Password != "" {
+		constr += `,"password":"` + opt.Password + `"`
 	}
 
-	constr += `,"dbNum":0}`
+	constr += `,"dbNum":` + strconv.Itoa(opt.DbNum) + `}`
 
 	log.Println("redis connect:" + con)
 
@@ -48,7 +84,7 @@ func InitRedis() {
 	// 	log.Println("redis error:" + err.Error())
 	// }
 
-	cc = RedisNewCache(con, key)
+	cc = RedisNewCache(con, opt.Password)
 }
 
 func SetCache(key string, value string, timeout int) error {
