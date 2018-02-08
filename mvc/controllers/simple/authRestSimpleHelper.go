@@ -5,49 +5,40 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/pkrss/go-utils/mvc/controllers"
 	"github.com/pkrss/go-utils/orm"
 	pkReflect "github.com/pkrss/go-utils/reflect"
 )
 
-type OpType int
+type ListOpType int
 
 const (
-	_ OpType = iota
+	_ ListOpType = iota
 	BeforeGetList
 	AfterGetList
 	BeforePost
 	AfterPost
-
-	BeforeGet
-	AfterGet
-	BeforePut
-	AfterPut
-	BeforeDelete
-	AfterDelete
 )
 
-type OnRestDbCallback func(op OpType, ob interface{}, dao orm.BaseDaoInterface, c controllers.ControllerInterface) error
+type OnListRestDbCallback func(op ListOpType, ob interface{}, dao orm.BaseDaoInterface, c *ListAuthRestController) error
 
-type SimpleAuthRestHelper struct {
+type ListAuthRestHelper struct {
 	Dao           orm.BaseDaoInterface
-	C             *SimpleAuthRestController
-	OnRestDbCbFun OnRestDbCallback
+	C             *ListAuthRestController
 	OldCodeFormat bool
 }
 
-func CreateSimpleAuthRestHelper(c *SimpleAuthRestController, v orm.BaseModelInterface) (ret *SimpleAuthRestHelper) {
+func CreateListAuthRestHelper(c *ListAuthRestController, v orm.BaseModelInterface) (ret *ListAuthRestHelper) {
 	d := orm.CreateBaseDao(v)
-	ret = &SimpleAuthRestHelper{C: c, Dao: d}
+	ret = &ListAuthRestHelper{C: c, Dao: d}
 	return
 }
 
-func (this *SimpleAuthRestHelper) OnGetList(selSql string, cb orm.SelectListCallback) {
+func (this *ListAuthRestHelper) OnGetList(selSql string, cb orm.SelectListCallback) {
 
 	pageable := this.C.GetPageableFromRequest()
 
-	if this.OnRestDbCbFun != nil {
-		e := this.OnRestDbCbFun(BeforeGetList, nil, this.Dao, this.C)
+	if this.C.Params.OnRestDbCbFun != nil {
+		e := this.C.Params.OnRestDbCbFun(BeforeGetList, nil, this.Dao, this.C)
 		if e != nil {
 			this.C.AjaxError(e.Error())
 			return
@@ -60,8 +51,8 @@ func (this *SimpleAuthRestHelper) OnGetList(selSql string, cb orm.SelectListCall
 		return
 	}
 
-	if err == nil && this.OnRestDbCbFun != nil {
-		e := this.OnRestDbCbFun(AfterGetList, l, this.Dao, this.C)
+	if err == nil && this.C.Params.OnRestDbCbFun != nil {
+		e := this.C.Params.OnRestDbCbFun(AfterGetList, l, this.Dao, this.C)
 		if e != nil {
 			this.C.AjaxError(err.Error())
 			return
@@ -75,7 +66,7 @@ func (this *SimpleAuthRestHelper) OnGetList(selSql string, cb orm.SelectListCall
 	this.C.AjaxDbList(pageable, l, c, total, this.OldCodeFormat)
 }
 
-func (this *SimpleAuthRestHelper) OnGetListWithPrivilege(requiredPrivilege interface{}, selSql string, cb orm.SelectListCallback) {
+func (this *ListAuthRestHelper) OnGetListWithPrivilege(requiredPrivilege interface{}, selSql string, cb orm.SelectListCallback) {
 	ok := this.C.CheckUserPrivilege(requiredPrivilege)
 	if !ok {
 		this.C.AjaxError("Privilege error")
@@ -85,7 +76,7 @@ func (this *SimpleAuthRestHelper) OnGetListWithPrivilege(requiredPrivilege inter
 	this.OnGetList(selSql, cb)
 }
 
-func (this *SimpleAuthRestHelper) OnPost(structColsParams ...*pkReflect.StructSelCols) {
+func (this *ListAuthRestHelper) OnPost(structColsParams ...*pkReflect.StructSelCols) {
 
 	ob := this.Dao.CreateModelObject()
 
@@ -96,8 +87,8 @@ func (this *SimpleAuthRestHelper) OnPost(structColsParams ...*pkReflect.StructSe
 		return
 	}
 
-	if this.OnRestDbCbFun != nil {
-		e := this.OnRestDbCbFun(BeforePost, ob, this.Dao, this.C)
+	if this.C.Params.OnRestDbCbFun != nil {
+		e := this.C.Params.OnRestDbCbFun(BeforePost, ob, this.Dao, this.C)
 		if e != nil {
 			this.C.AjaxError(e.Error())
 			return
@@ -106,8 +97,8 @@ func (this *SimpleAuthRestHelper) OnPost(structColsParams ...*pkReflect.StructSe
 
 	err := this.Dao.Insert(ob, structColsParams...)
 
-	if err == nil && this.OnRestDbCbFun != nil {
-		e := this.OnRestDbCbFun(AfterPost, ob, this.Dao, this.C)
+	if err == nil && this.C.Params.OnRestDbCbFun != nil {
+		e := this.C.Params.OnRestDbCbFun(AfterPost, ob, this.Dao, this.C)
 		if e != nil {
 			this.C.AjaxError(err.Error())
 			return
@@ -122,7 +113,7 @@ func (this *SimpleAuthRestHelper) OnPost(structColsParams ...*pkReflect.StructSe
 	this.C.AjaxDbRecord(ob, this.OldCodeFormat)
 }
 
-func (this *SimpleAuthRestHelper) OnPostWithPrivilege(requiredPrivilege interface{}, structColsParams ...*pkReflect.StructSelCols) {
+func (this *ListAuthRestHelper) OnPostWithPrivilege(requiredPrivilege interface{}, structColsParams ...*pkReflect.StructSelCols) {
 	ok := this.C.CheckUserPrivilege(requiredPrivilege)
 	if !ok {
 		this.C.AjaxError("Privilege error")
@@ -132,7 +123,37 @@ func (this *SimpleAuthRestHelper) OnPostWithPrivilege(requiredPrivilege interfac
 	this.OnPost(structColsParams...)
 }
 
-func (this *SimpleAuthRestHelper) GetIdParam(k string, t reflect.Kind) (id interface{}, e error) {
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type ItemOpType int
+
+const (
+	_ ItemOpType = iota
+
+	BeforeGet
+	AfterGet
+	BeforePut
+	AfterPut
+	BeforeDelete
+	AfterDelete
+)
+
+type OnItemRestDbCallback func(op ItemOpType, ob interface{}, dao orm.BaseDaoInterface, c *ItemAuthRestController) error
+
+type ItemAuthRestHelper struct {
+	Dao           orm.BaseDaoInterface
+	C             *ItemAuthRestController
+	OnRestDbCbFun OnItemRestDbCallback
+	OldCodeFormat bool
+}
+
+func CreateItemAuthRestHelper(c *ItemAuthRestController, v orm.BaseModelInterface) (ret *ItemAuthRestHelper) {
+	d := orm.CreateBaseDao(v)
+	ret = &ItemAuthRestHelper{C: c, Dao: d}
+	return
+}
+
+func (this *ItemAuthRestHelper) GetIdParam(k string, t reflect.Kind) (id interface{}, e error) {
 
 	s := this.C.Query(k)
 	if s == "" {
@@ -161,7 +182,7 @@ func (this *SimpleAuthRestHelper) GetIdParam(k string, t reflect.Kind) (id inter
 	return
 }
 
-func (this *SimpleAuthRestHelper) OnGetOne(k string, t reflect.Kind) {
+func (this *ItemAuthRestHelper) OnGetOne(k string, t reflect.Kind) {
 
 	id, e := this.GetIdParam(k, t)
 
@@ -170,8 +191,8 @@ func (this *SimpleAuthRestHelper) OnGetOne(k string, t reflect.Kind) {
 		return
 	}
 
-	if this.OnRestDbCbFun != nil {
-		e := this.OnRestDbCbFun(BeforeGet, nil, this.Dao, this.C)
+	if this.C.Params.OnRestDbCbFun != nil {
+		e := this.C.Params.OnRestDbCbFun(BeforeGet, nil, this.Dao, this.C)
 		if e != nil {
 			this.C.AjaxError(e.Error())
 			return
@@ -180,8 +201,8 @@ func (this *SimpleAuthRestHelper) OnGetOne(k string, t reflect.Kind) {
 
 	ob, err := this.Dao.FindOneById(id)
 
-	if err == nil && this.OnRestDbCbFun != nil {
-		e := this.OnRestDbCbFun(AfterGet, ob, this.Dao, this.C)
+	if err == nil && this.C.Params.OnRestDbCbFun != nil {
+		e := this.C.Params.OnRestDbCbFun(AfterGet, ob, this.Dao, this.C)
 		if e != nil {
 			this.C.AjaxError(e.Error())
 			return
@@ -196,7 +217,7 @@ func (this *SimpleAuthRestHelper) OnGetOne(k string, t reflect.Kind) {
 	this.C.AjaxDbRecord(ob, this.OldCodeFormat)
 }
 
-func (this *SimpleAuthRestHelper) OnGetOneWithPrivilege(requiredPrivilege interface{}, k string, t reflect.Kind) {
+func (this *ItemAuthRestHelper) OnGetOneWithPrivilege(requiredPrivilege interface{}, k string, t reflect.Kind) {
 
 	ok := this.C.CheckUserPrivilege(requiredPrivilege)
 	if !ok {
@@ -207,7 +228,7 @@ func (this *SimpleAuthRestHelper) OnGetOneWithPrivilege(requiredPrivilege interf
 	this.OnGetOne(k, t)
 }
 
-func (this *SimpleAuthRestHelper) OnPut(k string, t reflect.Kind, structColsParams ...*pkReflect.StructSelCols) {
+func (this *ItemAuthRestHelper) OnPut(k string, t reflect.Kind, structColsParams ...*pkReflect.StructSelCols) {
 
 	id, e := this.GetIdParam(k, t)
 
@@ -224,9 +245,9 @@ func (this *SimpleAuthRestHelper) OnPut(k string, t reflect.Kind, structColsPara
 		return
 	}
 
-	if this.OnRestDbCbFun != nil {
+	if this.C.Params.OnRestDbCbFun != nil {
 		pkReflect.SetStructFieldValue(ob, ob.IdColumn(), id)
-		e := this.OnRestDbCbFun(BeforePut, ob, this.Dao, this.C)
+		e := this.C.Params.OnRestDbCbFun(BeforePut, ob, this.Dao, this.C)
 		if e != nil {
 			this.C.AjaxError(e.Error())
 			return
@@ -235,8 +256,8 @@ func (this *SimpleAuthRestHelper) OnPut(k string, t reflect.Kind, structColsPara
 
 	err := this.Dao.UpdateById(ob, id, structColsParams...)
 
-	if err == nil && this.OnRestDbCbFun != nil {
-		e := this.OnRestDbCbFun(AfterPut, ob, this.Dao, this.C)
+	if err == nil && this.C.Params.OnRestDbCbFun != nil {
+		e := this.C.Params.OnRestDbCbFun(AfterPut, ob, this.Dao, this.C)
 		if e != nil {
 			this.C.AjaxError(e.Error())
 			return
@@ -251,7 +272,7 @@ func (this *SimpleAuthRestHelper) OnPut(k string, t reflect.Kind, structColsPara
 	this.C.AjaxDbRecord(ob, this.OldCodeFormat)
 }
 
-func (this *SimpleAuthRestHelper) OnPutWithPrivilege(requiredPrivilege interface{}, k string, t reflect.Kind, structColsParams ...*pkReflect.StructSelCols) {
+func (this *ItemAuthRestHelper) OnPutWithPrivilege(requiredPrivilege interface{}, k string, t reflect.Kind, structColsParams ...*pkReflect.StructSelCols) {
 
 	ok := this.C.CheckUserPrivilege(requiredPrivilege)
 	if !ok {
@@ -262,7 +283,7 @@ func (this *SimpleAuthRestHelper) OnPutWithPrivilege(requiredPrivilege interface
 	this.OnPut(k, t, structColsParams...)
 }
 
-func (this *SimpleAuthRestHelper) OnDelete(k string, t reflect.Kind) {
+func (this *ItemAuthRestHelper) OnDelete(k string, t reflect.Kind) {
 
 	id, e := this.GetIdParam(k, t)
 
@@ -277,9 +298,9 @@ func (this *SimpleAuthRestHelper) OnDelete(k string, t reflect.Kind) {
 		return
 	}
 
-	if this.OnRestDbCbFun != nil {
+	if this.C.Params.OnRestDbCbFun != nil {
 		pkReflect.SetStructFieldValue(ob, ob.IdColumn(), id)
-		e := this.OnRestDbCbFun(BeforeDelete, ob, this.Dao, this.C)
+		e := this.C.Params.OnRestDbCbFun(BeforeDelete, ob, this.Dao, this.C)
 		if e != nil {
 			this.C.AjaxError(err.Error())
 			return
@@ -288,8 +309,8 @@ func (this *SimpleAuthRestHelper) OnDelete(k string, t reflect.Kind) {
 
 	err = this.Dao.DeleteOneById(id)
 
-	if this.OnRestDbCbFun != nil {
-		e := this.OnRestDbCbFun(AfterDelete, ob, this.Dao, this.C)
+	if this.C.Params.OnRestDbCbFun != nil {
+		e := this.C.Params.OnRestDbCbFun(AfterDelete, ob, this.Dao, this.C)
 		if e != nil {
 			this.C.AjaxError(e.Error())
 			return
@@ -304,7 +325,7 @@ func (this *SimpleAuthRestHelper) OnDelete(k string, t reflect.Kind) {
 	this.C.AjaxDbRecord(ob, this.OldCodeFormat)
 }
 
-func (this *SimpleAuthRestHelper) OnDeleteWithPrivilege(requiredPrivilege interface{}, k string, t reflect.Kind) {
+func (this *ItemAuthRestHelper) OnDeleteWithPrivilege(requiredPrivilege interface{}, k string, t reflect.Kind) {
 
 	ok := this.C.CheckUserPrivilege(requiredPrivilege)
 	if !ok {
