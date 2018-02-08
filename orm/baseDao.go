@@ -160,7 +160,8 @@ func (this *BaseDao) DeleteByFilter(col string, val interface{}) error {
 }
 
 func (this *BaseDao) UpdateById(ob BaseModelInterface, id interface{}, structColsParams ...*pkReflect.StructSelCols) error {
-	return this.UpdateByFilter(ob, ob.IdColumn(), id, structColsParams...)
+	idCol := this.getRealIdCol(this.ObjModel.IdColumn())
+	return this.UpdateByFilter(ob, idCol, id, structColsParams...)
 }
 func (this *BaseDao) getRealIdCol(idColumn string) string {
 	if strings.Contains(idColumn, ".") {
@@ -173,8 +174,8 @@ func (this *BaseDao) getRealIdCol(idColumn string) string {
 	return idColumn
 }
 func (this *BaseDao) Insert(ob BaseModelInterface, structColsParams ...*pkReflect.StructSelCols) error {
-
-	dbField2Values := inner.GetStructDbFieldsAndValues(ob, ob.IdColumn(), true, structColsParams...)
+	idCol := this.getRealIdCol(this.ObjModel.IdColumn())
+	dbField2Values := inner.GetStructDbFieldsAndValues(ob, idCol, true, structColsParams...)
 	c := len(dbField2Values)
 	if c == 0 {
 		return errors.New("No fields need insert!")
@@ -197,8 +198,6 @@ func (this *BaseDao) Insert(ob BaseModelInterface, structColsParams ...*pkReflec
 	}
 
 	sql := "INSERT INTO " + ob.TableName() + " (" + sqlKeys + ") VALUES(" + sqlKeys2 + ")"
-
-	idCol := this.getRealIdCol(ob.IdColumn())
 
 	if idCol != "" {
 

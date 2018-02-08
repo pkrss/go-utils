@@ -22,9 +22,9 @@ func testMakeSlice() {
 func testGetStructFields() {
 	app := common.CreateSampleOAuthApp()
 	app.AppBaseUrl = ""
-	m := inner.GetStructDbFieldsAndValues(app, true)
+	m := inner.GetStructDbFieldsAndValues(app, app.IdColumn(), true)
 	log.Printf("GetStructDbFieldsAndValues(true) = %v\n", m)
-	m = inner.GetStructDbFieldsAndValues(app, false)
+	m = inner.GetStructDbFieldsAndValues(app, app.IdColumn(), false)
 	log.Printf("GetStructDbFieldsAndValues(false) = %v\n", m)
 }
 
@@ -70,11 +70,11 @@ func testInsert() {
 
 func testFindList() {
 	pageable := beans.Pageable{}
-	pageable.PageSize = 20
+	pageable.Size = 20
 	pageable.Sort = "-id"
 	pageable.RspCodeFormat = true
 	pageable.CondArr = make(map[string]string, 0)
-	// pageable.PageNumber = 3
+	// pageable.Page = 3
 	pageable.CondArr["q"] = "WX"
 
 	l, total, e := dao.SelectSelSqlList("", &pageable, nil, func(listRawHelper *baseOrm.ListRawHelper) error {
@@ -93,12 +93,12 @@ func main() {
 
 	dao = baseOrm.CreateBaseDao(&common.OAuthApp{})
 
-	// testMakeSlice()
-	// testGetStructFields()
-	// testFindOne()
-	// testFindList()
+	testMakeSlice()
+	testGetStructFields()
+	testFindOne()
+	testFindList()
 	testDelete()
 	testInsert()
-	// testUpdate()
+	testUpdate()
 
 }
