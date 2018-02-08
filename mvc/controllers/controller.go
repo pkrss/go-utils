@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -29,6 +30,7 @@ type ControllerInterface interface {
 	SetRequest(r *http.Request)
 	GetRequest() *http.Request
 	RequestBodyToJsonObject(ob interface{}) error
+	GetClientIpAddr() string
 
 	AjaxError(message string, codes ...int)
 
@@ -193,6 +195,43 @@ func (this *Controller) AjaxError(message string, codes ...int) {
 	out["message"] = message
 
 	this.JsonResult(out)
+
+	log.Printf("Ip: %s. Ajax Error: %s\n", this.GetClientIpAddr(), message)
+
+}
+
+func (this *Controller) GetClientIpAddr() string {
+	ctx := this
+	ipAddress := ctx.Header("x-forwarded-for")
+	if ipAddress == "" || "unknown" == strings.ToLower(ipAddress) {
+		ipAddress = ctx.Header("Proxy-Client-IP")
+	}
+	if ipAddress == "" || "unknown" == strings.ToLower(ipAddress) {
+		ipAddress = ctx.Header("WL-Proxy-Client-IP")
+	}
+	if ipAddress == "" || "unknown" == strings.ToLower(ipAddress) {
+		ipAddress = ctx.GetRequest().RemoteAddr
+		// if ipAddress == "127.0.0.1" {
+		// 	// 根据网卡取本机配置的IP
+		// 	InetAddress inet = null;
+		// 	try {
+		// 		inet = InetAddress.getLocalHost();
+		// 	} catch (Exception e) {
+		// 		e.printStackTrace();
+		// 	}
+		// 	ipAddress = inet.getHostAddress();
+		// }
+
+	}
+
+	// 对于通过多个代理的情况，第一个IP为客户端真实IP,多个IP按照','分割
+	if len(ipAddress) > 15 { // "***.***.***.***".length() = 15
+		pos := strings.Index(ipAddress, ",")
+		if pos > 0 {
+			ipAddress = ipAddress[:pos]
+		}
+	}
+	return ipAddress
 }
 
 func (this *Controller) AjaxMsg(code int, data interface{}, message ...string) {

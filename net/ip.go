@@ -3,42 +3,7 @@ package net
 import (
 	"strconv"
 	"strings"
-
-	"github.com/pkrss/go-utils/mvc/controllers"
 )
-
-func GetClientIpAddr(ctx controllers.ControllerInterface) string {
-	ipAddress := ctx.Header("x-forwarded-for")
-	if ipAddress == "" || "unknown" == strings.ToLower(ipAddress) {
-		ipAddress = ctx.Header("Proxy-Client-IP")
-	}
-	if ipAddress == "" || "unknown" == strings.ToLower(ipAddress) {
-		ipAddress = ctx.Header("WL-Proxy-Client-IP")
-	}
-	if ipAddress == "" || "unknown" == strings.ToLower(ipAddress) {
-		ipAddress = ctx.GetRequest().RemoteAddr
-		// if ipAddress == "127.0.0.1" {
-		// 	// 根据网卡取本机配置的IP
-		// 	InetAddress inet = null;
-		// 	try {
-		// 		inet = InetAddress.getLocalHost();
-		// 	} catch (Exception e) {
-		// 		e.printStackTrace();
-		// 	}
-		// 	ipAddress = inet.getHostAddress();
-		// }
-
-	}
-
-	// 对于通过多个代理的情况，第一个IP为客户端真实IP,多个IP按照','分割
-	if len(ipAddress) > 15 { // "***.***.***.***".length() = 15
-		pos := strings.Index(ipAddress, ",")
-		if pos > 0 {
-			ipAddress = ipAddress[:pos]
-		}
-	}
-	return ipAddress
-}
 
 // func Inet_ntoa(ipnr int64) net.IP {
 //     var bytes [4]byte
