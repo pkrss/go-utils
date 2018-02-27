@@ -59,7 +59,7 @@ func (this *UUID) Scan(src interface{}) error {
 }
 
 // for github.com/go-pg
-func (this UUID) AppendValue(b []byte, quote int) ([]byte, error) {
+func (this UUID) AppendValue(b []byte, quote int) []byte {
 	s := string(this)
 
 	if quote == 2 {
@@ -101,7 +101,7 @@ func (this UUID) AppendValue(b []byte, quote int) ([]byte, error) {
 	} else if quote == 1 {
 		b = append(b, '\'')
 	}
-	return b, nil
+	return b
 }
 
 func (this *UUID) SetRaw(value interface{}) error {

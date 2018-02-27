@@ -116,7 +116,7 @@ func (this *JsonTime) Scan(value interface{}) error {
 }
 
 // for github.com/go-pg
-func (this JsonTime) AppendValue(b []byte, quote int) ([]byte, error) {
+func (this JsonTime) AppendValue(b []byte, quote int) []byte {
 	tm := time.Time(this)
 
 	if quote == 1 {
@@ -126,7 +126,7 @@ func (this JsonTime) AppendValue(b []byte, quote int) ([]byte, error) {
 	if quote == 1 {
 		b = append(b, '\'')
 	}
-	return b, nil
+	return b
 }
 
 func (e *JsonTime) SetRaw(value interface{}) error {
