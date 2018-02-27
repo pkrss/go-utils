@@ -86,7 +86,7 @@ func (this *JsonTime) Scan(value interface{}) error {
 			// t, _ := time.ParseInLocation("2006-01-02 15:04:05", d, time.Local)
 			fmt := "2006-01-02 15:04:05"
 			if len(d) > 12 && strings.ContainsAny(d[10:], "+-") {
-				fmt = "2006-01-02 15:04:05Z07"
+				fmt += "Z07"
 			}
 			t, e := time.Parse(fmt, d)
 			if e != nil {
@@ -114,7 +114,7 @@ func (this JsonTime) AppendValue(b []byte, quote int) ([]byte, error) {
 	if quote == 1 {
 		b = append(b, '\'')
 	}
-	b = tm.UTC().AppendFormat(b, "2006-01-02 15:04:05")
+	b = tm.UTC().AppendFormat(b, "2006-01-02 15:04:05Z07")
 	if quote == 1 {
 		b = append(b, '\'')
 	}
