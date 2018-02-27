@@ -3,6 +3,7 @@ package fields
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -26,28 +27,35 @@ func JsonTime2Date(jt *JsonTime) time.Time {
 }
 
 func (ct *JsonTime) UnmarshalJSON(b []byte) (err error) {
-	// s := strings.Trim(string(b), "\"")
-	// if s == "null" {
-	//     ct.Set(nilTime)
-	//     return
-	// }
-	// v,err := strconv.ParseInt(s, 10, 64)
-	// if err == nil {
-	//     if v > 100000000000 {
-	//         v = v / 1000
-	//     }
-	//     ct.Set(time.Unix(v, 0))
-	// }else{
-	//     ct.Set(nilTime)
-	// }
-	// return err
-	d := time.Time{}
-	e := d.UnmarshalJSON(b)
-	if e != nil {
+	if b == nil || len(b) == 0 {
+		ct.Set(nilTime)
+		return nil
+	}
+	if b[0] == '"' {
+		d := time.Time{}
+		e := d.UnmarshalJSON(b)
+		if e != nil {
+			return e
+		}
+		ct.Set(d)
 		return e
 	}
-	ct.Set(d)
-	return e
+	s := string(b)
+	s = strings.Trim(s, "\"")
+	if s == "null" {
+		ct.Set(nilTime)
+		return
+	}
+	v, err := strconv.ParseInt(s, 10, 64)
+	if err == nil {
+		if v > 100000000000 {
+			v = v / 1000
+		}
+		ct.Set(time.Unix(v, 0))
+	} else {
+		ct.Set(nilTime)
+	}
+	return err
 }
 
 func (ct *JsonTime) MarshalJSON() ([]byte, error) {
@@ -57,8 +65,8 @@ func (ct *JsonTime) MarshalJSON() ([]byte, error) {
 		return []byte("null"), nil
 	}
 
-	return t.MarshalJSON()
-	// return []byte(fmt.Sprintf("%d", t.Unix()*1000)), nil
+	// return t.MarshalJSON()
+	return []byte(fmt.Sprintf("%d", t.Unix()*1000)), nil
 }
 
 func (e JsonTime) Value() time.Time {
