@@ -163,7 +163,7 @@ func GetStructFieldInfoMap2(v interface{}, ret map[string]FieldInfo, structColsP
 	var cols []string
 	var excludeCols []string
 
-	if len(structColsParams) > 0 {
+	if len(structColsParams) > 0 && structColsParams[0] != nil {
 		cols = structColsParams[0].IncludeCols
 		excludeCols = structColsParams[0].ExcludeCols
 	}
