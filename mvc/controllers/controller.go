@@ -38,7 +38,7 @@ type ControllerInterface interface {
 	SetCookieValue(key string, val string, maxAgeSecondss ...int)
 	CookieValue(key string) string
 	GetInt(key string, defValues ...int) int
-	GetId64(key string, defValues ...int64) int64
+	GetInt64(key string, defValues ...int64) int64
 	GetString(key string, defValues ...string) string
 }
 
@@ -397,7 +397,7 @@ func (this *Controller) GetInt(key string, defValues ...int) int {
 	return i
 }
 
-func (this *Controller) GetId64(key string, defValues ...int64) int64 {
+func (this *Controller) GetInt64(key string, defValues ...int64) int64 {
 	var defValue int64 = 0
 	if len(defValues) > 0 {
 		defValue = defValues[0]

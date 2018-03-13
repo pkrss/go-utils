@@ -65,7 +65,7 @@ func (this *BigIntArray) Scan(src interface{}) error {
 }
 
 // for github.com/go-pg
-func (this BigIntArray) AppendValue(b []byte, quote int) ([]byte, error) {
+func (this BigIntArray) AppendValue(b []byte, quote int) []byte {
 
 	ints := []int64(this)
 
@@ -88,7 +88,7 @@ func (this BigIntArray) AppendValue(b []byte, quote int) ([]byte, error) {
 		b = append(b, '\'')
 	}
 
-	return b, nil
+	return b
 }
 
 func (this *BigIntArray) SetRaw(value interface{}) error {

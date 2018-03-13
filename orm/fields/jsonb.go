@@ -77,7 +77,7 @@ func (p *Parser) SkipBytes(b []byte) bool {
 }
 
 // for github.com/go-pg
-func (this JsonbField) AppendValue(b []byte, quote int) ([]byte, error) {
+func (this JsonbField) AppendValue(b []byte, quote int) []byte {
 
 	jsonb := []byte(string(this))
 	if quote == 1 {
@@ -114,7 +114,7 @@ func (this JsonbField) AppendValue(b []byte, quote int) ([]byte, error) {
 		b = append(b, '\'')
 	}
 
-	return b, nil
+	return b
 }
 
 // for github.com/go-pg
