@@ -201,7 +201,7 @@ func (this *ItemAuthRestHelper) OnGetOne(k string, t reflect.Kind) {
 	}
 
 	if this.C.Params.OnRestDbCbFun != nil {
-		e := this.C.Params.OnRestDbCbFun(BeforeGet, nil, this.Dao, this.C)
+		e = this.C.Params.OnRestDbCbFun(BeforeGet, nil, this.Dao, this.C)
 		if e != nil {
 			this.C.AjaxError(e.Error())
 			return
@@ -211,7 +211,7 @@ func (this *ItemAuthRestHelper) OnGetOne(k string, t reflect.Kind) {
 	ob, err := this.Dao.FindOneById(id)
 
 	if err == nil && this.C.Params.OnRestDbCbFun != nil {
-		e := this.C.Params.OnRestDbCbFun(AfterGet, ob, this.Dao, this.C)
+		e = this.C.Params.OnRestDbCbFun(AfterGet, ob, this.Dao, this.C)
 		if e != nil {
 			this.C.AjaxError(e.Error())
 			return
@@ -260,25 +260,31 @@ func (this *ItemAuthRestHelper) OnPut(k string, t reflect.Kind, structColsParams
 
 	if this.C.Params.OnRestDbCbFun != nil {
 		pkReflect.SetStructFieldValue(ob, ob.IdColumn(), id)
-		e := this.C.Params.OnRestDbCbFun(BeforePut, ob, this.Dao, this.C)
+		e = this.C.Params.OnRestDbCbFun(BeforePut, ob, this.Dao, this.C)
 		if e != nil {
 			this.C.AjaxError(e.Error())
 			return
 		}
 	}
 
-	err := this.Dao.UpdateById(ob, id, structColsParams...)
-
-	if err == nil && this.C.Params.OnRestDbCbFun != nil {
-		e := this.C.Params.OnRestDbCbFun(AfterPut, ob, this.Dao, this.C)
-		if e != nil {
-			this.C.AjaxError(e.Error())
-			return
-		}
+	e = this.Dao.UpdateById(ob, id, structColsParams...)
+	if e != nil {
+		this.C.AjaxError(e.Error())
+		return
 	}
 
-	if err != nil {
-		this.C.AjaxError(err.Error())
+	ob, e = this.Dao.FindOneById(id)
+	if e != nil {
+		this.C.AjaxError(e.Error())
+		return
+	}
+
+	if this.C.Params.OnRestDbCbFun != nil {
+		e = this.C.Params.OnRestDbCbFun(AfterPut, ob, this.Dao, this.C)
+	}
+
+	if e != nil {
+		this.C.AjaxError(e.Error())
 		return
 	}
 
@@ -317,26 +323,26 @@ func (this *ItemAuthRestHelper) OnDelete(k string, t reflect.Kind) {
 
 	if this.C.Params.OnRestDbCbFun != nil {
 		pkReflect.SetStructFieldValue(ob, ob.IdColumn(), id)
-		e := this.C.Params.OnRestDbCbFun(BeforeDelete, ob, this.Dao, this.C)
-		if e != nil {
-			this.C.AjaxError(err.Error())
-			return
-		}
-	}
-
-	err = this.Dao.DeleteOneById(id)
-
-	if this.C.Params.OnRestDbCbFun != nil {
-		e := this.C.Params.OnRestDbCbFun(AfterDelete, ob, this.Dao, this.C)
+		e = this.C.Params.OnRestDbCbFun(BeforeDelete, ob, this.Dao, this.C)
 		if e != nil {
 			this.C.AjaxError(e.Error())
 			return
 		}
 	}
 
-	if err != nil {
-		this.C.AjaxError(err.Error())
+	e = this.Dao.DeleteOneById(id)
+
+	if e != nil {
+		this.C.AjaxError(e.Error())
 		return
+	}
+
+	if this.C.Params.OnRestDbCbFun != nil {
+		e = this.C.Params.OnRestDbCbFun(AfterDelete, ob, this.Dao, this.C)
+		if e != nil {
+			this.C.AjaxError(e.Error())
+			return
+		}
 	}
 
 	if ob != nil {
