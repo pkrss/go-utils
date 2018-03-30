@@ -432,5 +432,5 @@ func (this *Controller) RenderViewSimple(viewPath string, args ...interface{}) {
 		this.AjaxError(err.Error())
 		return
 	}
-	page.ExecuteTemplate(this.W, "", args)
+	page.Execute(this.W, args)
 }
