@@ -23,3 +23,6 @@ CREATE TABLE pkrss_user_context (
     create_time timestamp with time zone DEFAULT now(),
     update_time timestamp with time zone DEFAULT now()
 );
+
+-- Delete old than 3 hour data on Saturday each hour
+SELECT cron.schedule('1 * * * *', $$DELETE FROM pkrss_user_context WHERE update_time < now() - interval '3 hour'$$);
