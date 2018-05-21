@@ -28,6 +28,23 @@ func ProfileReadString(key string, def ...string) string {
 	return v
 }
 
+func ProfileReadFloat64(key string, def ...float64) float64 {
+	v := 0.0
+	if len(def) > 0 {
+		v = def[0]
+	}
+
+	s := ProfileReadString(key)
+	if s != "" {
+		v2, err := strconv.ParseFloat(s, 64)
+		if err == nil {
+			v = v2
+		}
+	}
+
+	return v
+}
+
 func ProfileReadInt(key string, def ...int) int {
 
 	v := 0

@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func HttpGet(url string) ([]byte, error) {
+func HttpGet(url string, optHeader ...map[string]string) ([]byte, error) {
 
 	if url == "" {
 		return nil, errors.New("url is empty")
