@@ -1,5 +1,11 @@
 package controllers
 
+import (
+	"strings"
+
+	"github.com/pkrss/go-utils/net"
+)
+
 ///////////////////////////////////////////////////////////
 
 type AuthImplInterface interface {
@@ -103,6 +109,23 @@ func (this *AuthController) CheckUserPrivilege(requiredPrivilege interface{}) bo
 
 	return false
 }
+
+func (this *AuthController) CheckUserPrivilegeRedirect(requiredPrivilege interface{}, redirectUrl string) (ret bool) {
+	ret = this.CheckUserPrivilege(requiredPrivilege)
+	if ret {
+		return
+	}
+
+	if strings.Contains(redirectUrl, "{url}") {
+		u := net.EncodeUriComponent(this.R.URL.RequestURI())
+		redirectUrl = strings.Replace(redirectUrl, "{url}", u, -1)
+	}
+
+	this.Redirect(redirectUrl)
+
+	return
+}
+
 func (this *AuthController) CheckUserIsClientManagerOrSelf(targetUserId interface{}) bool {
 	userContext := this.LoadUserContext()
 

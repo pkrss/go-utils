@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkrss/go-utils/examples/mvc/complex/auth"
 	"github.com/pkrss/go-utils/examples/mvc/complex/models"
 
 	"github.com/pkrss/go-utils/crypto"
@@ -12,7 +13,7 @@ import (
 	pkTime "github.com/pkrss/go-utils/time"
 )
 
-func Authenticate(rqt *models.UserLoginRequest) (ret map[string]interface{}, e error) {
+func Authenticate(rqt *auth.UserLoginRequest) (ret map[string]interface{}, e error) {
 	var user *models.User
 
 	if rqt == nil || rqt.UserName == "" || rqt.Password == "" {
@@ -64,7 +65,7 @@ func Authenticate(rqt *models.UserLoginRequest) (ret map[string]interface{}, e e
 	}
 
 	ext := make(map[string]interface{})
-	userContext, err := models.CreateTokenContext(user, rqt, ext)
+	userContext, err := auth.CreateTokenContext(user, rqt, ext)
 	if err != nil {
 		e = err
 		return

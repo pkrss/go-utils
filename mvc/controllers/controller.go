@@ -99,6 +99,9 @@ func (this *Controller) RequestBodyToJsonObject(ob interface{}) error {
 	this.R.Body.Close()
 	return err
 }
+func (this *Controller) Redirect(url string) {
+	http.Redirect(this.W, this.R, url, http.StatusFound)
+}
 
 /*
 	\param key string, ":k": search in url path paramters, else search in url paramters

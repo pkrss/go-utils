@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/pkrss/go-utils/examples/mvc/complex/auth"
 	"github.com/pkrss/go-utils/examples/mvc/complex/models"
 	"github.com/pkrss/go-utils/examples/mvc/complex/services"
 
@@ -12,7 +13,7 @@ type AuthenticatesController struct {
 }
 
 func (this *AuthenticatesController) Login() {
-	var rqt models.UserLoginRequest
+	var rqt auth.UserLoginRequest
 	e := this.RequestBodyToJsonObject(&rqt)
 	if e != nil {
 		this.AjaxError(e.Error())
@@ -31,7 +32,7 @@ func (this *AuthenticatesController) Login() {
 }
 
 func (this *AuthenticatesController) Pings() {
-	ok := this.CheckUserPrivilege(models.EGuest)
+	ok := this.CheckUserPrivilege(auth.EGuest)
 	if !ok {
 		this.AjaxError("not logined!")
 		return
@@ -39,7 +40,7 @@ func (this *AuthenticatesController) Pings() {
 
 	c := this.LoadUserContext().(*models.UserContext)
 
-	c.RefreshUserContext()
+	auth.RefreshUserContext(c)
 
 	this.AjaxDbRecord(nil, true)
 }

@@ -2,7 +2,8 @@ package routers
 
 import (
 	"net/http"
-	"sx98/sys/controllers"
+
+	"github.com/pkrss/go-utils/examples/mvc/complex/controllers"
 
 	pkRouters "github.com/pkrss/go-utils/mvc/routers"
 )

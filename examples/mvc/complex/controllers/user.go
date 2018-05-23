@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/pkrss/go-utils/examples/mvc/complex/auth"
 	"github.com/pkrss/go-utils/examples/mvc/complex/models"
 	"github.com/pkrss/go-utils/mvc/controllers/simple"
 	"github.com/pkrss/go-utils/orm"
@@ -21,7 +22,7 @@ func (this *UserController) OnPrepare() {
 	// }
 	params := simple.ListRestParams{
 		RecordModel: &models.User{}, SelectListCbFun: userGetList,
-		SelectPrivilege: models.EOperManagerStart, PostPrivilege: models.EOperManagerStart, PostStructColsParams: nil,
+		SelectPrivilege: auth.EOperManagerStart, PostPrivilege: auth.EOperManagerStart, PostStructColsParams: nil,
 		OnRestDbCbFun: userListOnRestDbCallback,
 	}
 
@@ -109,7 +110,7 @@ func (this *UserIdController) OnPrepare() {
 	}
 	params := simple.ItemRestParams{
 		RecordModel: &models.User{}, IdUrlParam: ":id", IdType: reflect.String,
-		PutStructColsParams: putStructColsParams, DeletePrivilege: models.EOperManagerStart,
+		PutStructColsParams: putStructColsParams, DeletePrivilege: auth.EOperManagerStart,
 		OnRestDbCbFun: userOnRestDbCallback,
 	}
 
@@ -161,7 +162,7 @@ func userOnRestDbCallback(op simple.ItemOpType, ob interface{}, dao orm.BaseDaoI
 		putStructColsParams.ExcludeCols = append(putStructColsParams.ExcludeCols, denyKeys...)
 
 		userContext := c.LoadUserContext().(*models.UserContext)
-		if models.CheckUserPrivilege(userContext, models.EOperManagerStart) {
+		if auth.CheckUserPrivilege(userContext, auth.EOperManagerStart) {
 			// ob.Password = ""
 		} else if record.ID == userContext.UserId {
 			userCanNotModifyKeys := []string{}
