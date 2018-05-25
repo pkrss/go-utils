@@ -17,6 +17,7 @@ type BaseDaoInterface interface {
 	CreateModelSlice(len int, cap int) interface{} // create type is: *[]BaseModel
 	FindOneById(id interface{}) (BaseModelInterface, error)
 	FindOneByFilter(col string, val interface{}, structColsParams ...*pkReflect.StructSelCols) (BaseModelInterface, error)
+	FindOneByFilters(colVals map[string]interface{}, structColsParams ...*pkReflect.StructSelCols) (BaseModelInterface, error)
 	UpdateByFilter(ob BaseModelInterface, col string, val interface{}, structColsParams ...*pkReflect.StructSelCols) error
 	UpdateById(ob BaseModelInterface, id interface{}, structColsParams ...*pkReflect.StructSelCols) error
 	Insert(ob BaseModelInterface, structColsParams ...*pkReflect.StructSelCols) error
@@ -74,7 +75,12 @@ func (this *BaseDao) FindOneById(id interface{}) (BaseModelInterface, error) {
 }
 
 func (this *BaseDao) FindOneByFilter(col string, val interface{}, structColsParams ...*pkReflect.StructSelCols) (BaseModelInterface, error) {
+	kv := make(map[string]interface{})
+	kv[col] = val
+	return this.FindOneByFilters(kv, structColsParams...)
+}
 
+func (this *BaseDao) FindOneByFilters(colVals map[string]interface{}, structColsParams ...*pkReflect.StructSelCols) (BaseModelInterface, error) {
 	obj := this.CreateModelObject()
 
 	selSql := this.ObjModel.SelSql()
@@ -98,10 +104,22 @@ func (this *BaseDao) FindOneByFilter(col string, val interface{}, structColsPara
 		selSql += " FROM " + obj.TableName()
 	}
 
-	col = pkStrings.StringToCamelCase(col)
-	sql := selSql + " WHERE " + col + " = ?"
+	sql := selSql + " WHERE "
 
-	err = this.OrmAdapter.QueryOneBySql(obj, sql, val)
+	first := true
+	vals := make([]interface{}, 0)
+	for k, v := range colVals {
+		if first {
+			first = false
+		} else {
+			sql += ","
+		}
+		col := pkStrings.StringToCamelCase(k)
+		sql += col + " = ?"
+		vals = append(vals, v)
+	}
+
+	err = this.OrmAdapter.QueryOneBySql(obj, sql, vals...)
 
 	if err == nil && obj == nil {
 		err = errors.New("query one record is nil")
