@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	key := "1"
+	key := "pkrss-1"
 	origData := "23"
 	encrypted, e := crypto.DesEncrypt(origData, key)
 	if e != nil {
