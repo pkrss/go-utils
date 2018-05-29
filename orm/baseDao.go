@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/pkrss/go-utils/beans"
+	pkContainer "github.com/pkrss/go-utils/container"
 	"github.com/pkrss/go-utils/orm/inner"
 	pkReflect "github.com/pkrss/go-utils/reflect"
 	pkStrings "github.com/pkrss/go-utils/strings"
@@ -60,14 +61,7 @@ func (this *BaseDao) CreateModelObject() BaseModelInterface {
 	return obj
 }
 func (this *BaseDao) CreateModelSlice(len int, cap int) interface{} {
-	// Create a slice to begin with
-	myType := this.ObjType // reflect.TypeOf(this.ObjModel)
-	slice := reflect.MakeSlice(reflect.SliceOf(myType), len, cap)
-
-	// Create a pointer to a slice value and set it to the slice
-	x := reflect.New(slice.Type())
-	x.Elem().Set(slice)
-	return x.Elem().Addr().Interface().(interface{})
+	return pkContainer.CreateSlice(this.ObjType, len, cap)
 }
 
 func (this *BaseDao) FindOneById(id interface{}) (BaseModelInterface, error) {

@@ -47,15 +47,13 @@ func MapMerge(dest map[string]interface{}, src map[string]interface{}) map[strin
 	return dest
 }
 
-func MapGetStringValue(m map[string]interface{}, field string) string {
+func MapGetValue(m map[string]interface{}, field string) (ret interface{}) {
 
 	if len(m) == 0 || field == "" {
 		return ""
 	}
 
 	ks := strings.Split(field, ".")
-
-	ret := ""
 
 	var i int
 	for c := len(ks); i < c; i++ {
@@ -71,7 +69,8 @@ func MapGetStringValue(m map[string]interface{}, field string) string {
 		}
 
 		if i == c-1 {
-			ret = types.GetValueString(v)
+			// ret = types.GetValueString(v)
+			ret = v
 			break
 		}
 
@@ -83,6 +82,14 @@ func MapGetStringValue(m map[string]interface{}, field string) string {
 	}
 
 	return ret
+}
+
+func MapGetStringValue(m map[string]interface{}, field string) (ret string) {
+	v := MapGetValue(m, field)
+	if v != nil {
+		ret = types.GetValueString(v)
+	}
+	return
 }
 
 func MapKeys(m map[string]interface{}) []string {

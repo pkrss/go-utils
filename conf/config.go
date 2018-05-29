@@ -77,3 +77,54 @@ func GetString(key string) string {
 	}
 	return pkContainer.MapGetStringValue(Config, key)
 }
+
+func GetArray(key string) (ret []interface{}) {
+	if key == "" {
+		return
+	}
+	v := os.Getenv(key)
+	if v != "" {
+		vv := strings.Split(v, ",")
+		ret = make([]interface{}, len(vv))
+		for i, j := range vv {
+			ret[i] = j
+		}
+		return
+	}
+
+	if Config == nil {
+		return
+	}
+	v2 := pkContainer.MapGetValue(Config, key)
+	if v2 != nil {
+		return v2.([]interface{})
+	}
+	return
+}
+
+func GetStringArray(key string) (ret []string) {
+	v := GetArray(key)
+	if v == nil {
+		return
+	}
+	ret = make([]string, len(v))
+	for i, j := range v {
+		ret[i] = j.(string)
+	}
+	return
+}
+
+func GetSubObject(key string) (ret map[string]interface{}) {
+	if key == "" {
+		return
+	}
+
+	if Config == nil {
+		return
+	}
+	v2 := pkContainer.MapGetValue(Config, key)
+	if v2 != nil {
+		return v2.(map[string]interface{})
+	}
+	return
+}
