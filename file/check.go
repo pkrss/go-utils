@@ -27,13 +27,16 @@ func FileIsExist(filename string) bool {
  * 修改时间1
  * 文件是否存在
  */
-func FileLastWriteTime(filename string) (int64, bool) {
+func FileLastWriteTime(filename string) (ret int64, f bool) {
 	stat, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return 0, false
+	if os.IsNotExist(err) || err != nil || stat == nil {
+		return
 	}
 
-	return stat.ModTime().Unix(), true
+	ret = stat.ModTime().Unix()
+	f = true
+
+	return
 }
 
 // /**
