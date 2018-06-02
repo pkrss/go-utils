@@ -106,3 +106,30 @@ func CastToString(o interface{}) (ret string, err error) {
 	}
 	return
 }
+
+func CastToBool(o interface{}) (ret bool, err error) {
+	if o == nil {
+		return
+	}
+	t := reflect.ValueOf(o)
+	if t.Kind() == reflect.Ptr {
+		return CastToBool(t.Elem().Interface())
+	}
+	switch v := o.(type) {
+	case int64:
+		ret = (v != 0)
+	case int:
+		ret = (v != 0)
+	case float32:
+		ret = (v != 0)
+	case float64:
+		ret = (v != 0)
+	case string:
+		ret, err = strconv.ParseBool(v)
+	case bool:
+		ret = v
+	default:
+		err = fmt.Errorf("Unknown type to bool error: %v %T", o, o)
+	}
+	return
+}
