@@ -116,20 +116,20 @@ func CastToBool(o interface{}) (ret bool, err error) {
 		return CastToBool(t.Elem().Interface())
 	}
 	switch v := o.(type) {
+	case bool:
+		ret = v
 	case int64:
 		ret = (v != 0)
 	case int:
 		ret = (v != 0)
 	case float32:
-		ret = (v != 0)
+		ret = (v != 0.0)
 	case float64:
-		ret = (v != 0)
+		ret = (v != 0.0)
 	case string:
 		ret, err = strconv.ParseBool(v)
-	case bool:
-		ret = v
 	default:
-		err = fmt.Errorf("Unknown type to bool error: %v %T", o, o)
+		err = fmt.Errorf("can not cast to bool:%v", v)
 	}
 	return
 }
