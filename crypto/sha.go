@@ -1,17 +1,17 @@
 package crypto
 
 import (
-	"crypto/md5"
+	"crypto/sha1"
 	"encoding/hex"
 	"strings"
 )
 
-func Md5(orig string) string {
-	return strings.ToLower(hex.EncodeToString(Md5Impl([]byte(orig))))
+func Sha1(orig string) string {
+	return strings.ToLower(hex.EncodeToString(Sha1Impl([]byte(orig))))
 }
 
-func Md5Impl(orig []byte) []byte {
-	ctx := md5.New()
+func Sha1Impl(orig []byte) []byte {
+	ctx := sha1.New()
 	ctx.Write(orig)
 	cipherStr := ctx.Sum(nil)
 	// fmt.Print(cipherStr)

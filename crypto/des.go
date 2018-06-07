@@ -10,7 +10,7 @@ import (
 func gereateBlock(key string, needSize int) (ret []byte) {
 
 	if len(key) != des.BlockSize {
-		key2 := _md5([]byte(key))
+		key2 := Md5Impl([]byte(key))
 		if len(key2) > des.BlockSize {
 			ret = key2[0:8]
 		}
