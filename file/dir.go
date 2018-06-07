@@ -17,5 +17,5 @@ func FileDir(fileName string) string {
 
 // 创建目录
 func CreateDir(fileName string) error {
-	return os.MkdirAll(fileName, 0666)
+	return os.MkdirAll(fileName, 0644)
 }
