@@ -63,12 +63,16 @@ func LoadConfigFile(ob interface{}, confFile string) error {
 	return err
 }
 
+func getEnvString(key string) (ret string, ok bool) {
+	return os.LookupEnv(key)
+}
+
 func GetString(key string) string {
 	if key == "" {
 		return ""
 	}
-	v := os.Getenv(key)
-	if v != "" {
+	v, ok := getEnvString(key)
+	if ok {
 		return v
 	}
 
@@ -82,8 +86,8 @@ func GetArray(key string) (ret []interface{}) {
 	if key == "" {
 		return
 	}
-	v := os.Getenv(key)
-	if v != "" {
+	v, ok := getEnvString(key)
+	if ok {
 		if v[0] == '[' {
 			e := json.Unmarshal([]byte(v), &ret)
 			if e == nil {
@@ -124,8 +128,8 @@ func GetSubObject(key string) (ret map[string]interface{}) {
 	if key == "" {
 		return
 	}
-	v := os.Getenv(key)
-	if v != "" {
+	v, ok := getEnvString(key)
+	if ok {
 
 		e := json.Unmarshal([]byte(v), &ret)
 		if e == nil {
