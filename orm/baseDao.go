@@ -19,6 +19,7 @@ type BaseDaoInterface interface {
 	FindOneById(id interface{}) (BaseModelInterface, error)
 	FindOneByFilter(col string, val interface{}, structColsParams ...*pkReflect.StructSelCols) (BaseModelInterface, error)
 	FindOneByFilters(colVals map[string]interface{}, structColsParams ...*pkReflect.StructSelCols) (BaseModelInterface, error)
+	FindOneBySql(selSql string, val ...interface{}) (BaseModelInterface, error)
 	UpdateByFilter(ob BaseModelInterface, col string, val interface{}, structColsParams ...*pkReflect.StructSelCols) error
 	UpdateById(ob BaseModelInterface, id interface{}, structColsParams ...*pkReflect.StructSelCols) error
 	Insert(ob BaseModelInterface, structColsParams ...*pkReflect.StructSelCols) error
@@ -124,6 +125,19 @@ func (this *BaseDao) FindOneByFilters(colVals map[string]interface{}, structCols
 	}
 
 	return obj, err
+}
+
+func (this *BaseDao) FindOneBySql(selSql string, val ...interface{}) (ret BaseModelInterface, e error) {
+	ret = this.CreateModelObject()
+
+	e = this.OrmAdapter.QueryOneBySql(ret, selSql, val...)
+
+	if e != nil {
+		return
+	}
+
+	return
+
 }
 
 func (this *BaseDao) UpdateByFilter(ob BaseModelInterface, col string, val interface{}, structColsParams ...*pkReflect.StructSelCols) error {

@@ -84,6 +84,12 @@ func GetArray(key string) (ret []interface{}) {
 	}
 	v := os.Getenv(key)
 	if v != "" {
+		if v[0] == '[' {
+			e := json.Unmarshal([]byte(v), &ret)
+			if e == nil {
+				return ret
+			}
+		}
 		vv := strings.Split(v, ",")
 		ret = make([]interface{}, len(vv))
 		for i, j := range vv {
@@ -117,6 +123,14 @@ func GetStringArray(key string) (ret []string) {
 func GetSubObject(key string) (ret map[string]interface{}) {
 	if key == "" {
 		return
+	}
+	v := os.Getenv(key)
+	if v != "" {
+
+		e := json.Unmarshal([]byte(v), &ret)
+		if e == nil {
+			return ret
+		}
 	}
 
 	if Config == nil {
