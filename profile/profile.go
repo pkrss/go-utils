@@ -14,9 +14,9 @@ func SetMyGetString(myGetString MyGetString) {
 }
 
 func ProfileReadString(key string, def ...string) string {
-	v := os.Getenv(key)
+	v, ok := os.LookupEnv(key)
 
-	if v == "" && gMyGetString != nil {
+	if !ok && gMyGetString != nil {
 		v = gMyGetString(key)
 	}
 

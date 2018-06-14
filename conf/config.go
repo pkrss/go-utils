@@ -2,6 +2,7 @@ package conf
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -34,7 +35,7 @@ func InitByConfigFile(confFile ...string) {
 		f = "./conf/config.json"
 	}
 	LoadConfigFile(&Config, f)
-	runmode := GetString("runmode")
+	runmode := GetString("sys.runmode")
 	if runmode == "" {
 		return
 	}
@@ -49,14 +50,13 @@ func InitByConfigFile(confFile ...string) {
 }
 
 func LoadConfigFile(ob interface{}, confFile string) error {
-	configFile, err := os.Open(confFile)
-	defer configFile.Close()
+	content, err := ioutil.ReadFile(confFile)
 	if err != nil {
 		log.Println(err.Error())
 		return err
 	}
-	jsonParser := json.NewDecoder(configFile)
-	err = jsonParser.Decode(ob)
+
+	err = json.Unmarshal(content, ob)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -74,6 +74,14 @@ func GetString(key string) string {
 	v, ok := getEnvString(key)
 	if ok {
 		return v
+	}
+
+	if strings.Contains(key, ".") {
+		key2 := strings.Replace(key, ".", "_", -1)
+		v, ok = getEnvString(key2)
+		if ok {
+			return v
+		}
 	}
 
 	if Config == nil {
