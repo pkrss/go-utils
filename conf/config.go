@@ -35,6 +35,18 @@ func InitByConfigFile(confFile ...string) {
 		f = "./conf/config.json"
 	}
 	LoadConfigFile(&Config, f)
+
+	s, ok := getEnvString("config.json")
+	if ok && (s != "") {
+		var m2 map[string]interface{}
+		e := json.Unmarshal([]byte(s), &m2)
+		if e == nil {
+			pkContainer.MapMerge(Config, m2)
+		} else {
+			log.Printf("merge from sys_env config.json error: %v\n", e)
+		}
+	}
+
 	runmode := GetString("sys.runmode")
 	if runmode == "" {
 		return
@@ -64,7 +76,14 @@ func LoadConfigFile(ob interface{}, confFile string) error {
 }
 
 func getEnvString(key string) (ret string, ok bool) {
-	return os.LookupEnv(key)
+	v, ok := os.LookupEnv(key)
+
+	if !ok && strings.Contains(key, ".") {
+		key2 := strings.Replace(key, ".", "_", -1)
+		v, ok = os.LookupEnv(key2)
+	}
+
+	return v, ok
 }
 
 func GetString(key string) string {
@@ -74,14 +93,6 @@ func GetString(key string) string {
 	v, ok := getEnvString(key)
 	if ok {
 		return v
-	}
-
-	if strings.Contains(key, ".") {
-		key2 := strings.Replace(key, ".", "_", -1)
-		v, ok = getEnvString(key2)
-		if ok {
-			return v
-		}
 	}
 
 	if Config == nil {
@@ -100,6 +111,8 @@ func GetArray(key string) (ret []interface{}) {
 			e := json.Unmarshal([]byte(v), &ret)
 			if e == nil {
 				return ret
+			} else {
+				log.Printf("GetArray %s %v\n", key, e)
 			}
 		}
 		vv := strings.Split(v, ",")
@@ -142,6 +155,8 @@ func GetSubObject(key string) (ret map[string]interface{}) {
 		e := json.Unmarshal([]byte(v), &ret)
 		if e == nil {
 			return ret
+		} else {
+			log.Printf("GetSubObject %s %v\n", key, e)
 		}
 	}
 
