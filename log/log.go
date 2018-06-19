@@ -12,9 +12,11 @@ import (
 
 var out io.Writer
 
+var logSplit string = "\n"
+
 func Println(p string) {
 	if out != nil {
-		p2 := time.Now().Format("2006-01-02 15:04:05 ") + p + "\n"
+		p2 := time.Now().Format("2006-01-02 15:04:05 ") + p + logSplit
 		out.Write([]byte(p2))
 	}
 	logOld.Println(p)
@@ -48,6 +50,10 @@ func (l *LogWriter) Close() {
 		l.f = nil
 	}
 	return
+}
+
+func SetLogSplitString(s string) {
+	logSplit = s
 }
 
 func NewOutLogWritter(file string) (ret *LogWriter, e error) {
