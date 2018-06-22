@@ -72,6 +72,11 @@ func (h *HttpClient) DoDeleteRetJson(httpUrl string, params map[string]string, r
 }
 
 func (h *HttpClient) DoRequest(httpUrl string, params map[string]string, httpMethod int, header map[string]string) (ret []byte, e error) {
+	ret, _, e = h.DoRequest2(httpUrl, params, httpMethod, header)
+	return
+}
+
+func (h *HttpClient) DoRequest2(httpUrl string, params map[string]string, httpMethod int, header map[string]string) (ret []byte, statsCode int, e error) {
 
 	if params == nil {
 		params = make(map[string]string)
@@ -102,7 +107,9 @@ func (h *HttpClient) DoRequest(httpUrl string, params map[string]string, httpMet
 
 	defer res.Body.Close()
 
-	switch res.StatusCode {
+	statsCode = res.StatusCode
+
+	switch statsCode {
 	case 200, 301, 302:
 		ret, e = res.ReadAll()
 	default:
