@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -132,4 +133,17 @@ func CastToBool(o interface{}) (ret bool, err error) {
 		err = fmt.Errorf("can not cast to bool:%v", v)
 	}
 	return
+}
+
+func CastToObject(in interface{}, out interface{}) (err error) {
+	if in == nil {
+		return errors.New("CastToObject in is null")
+	}
+	var content []byte
+	content, err = json.Marshal(in)
+	if err != nil {
+		return
+	}
+
+	return json.Unmarshal(content, out)
 }
