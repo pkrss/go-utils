@@ -120,6 +120,39 @@ func (h *HttpClient) DoRequest2(httpUrl string, params map[string]string, httpMe
 	return
 }
 
+func (h *HttpClient) DoRequestPostJson(httpUrl string, jsonData interface{}, header map[string]string) (ret []byte, statsCode int, e error) {
+
+	if jsonData == nil {
+		jsonData = make(map[string]string)
+	}
+
+	if header != nil && len(header) > 0 {
+		h.hc.WithHeaders(header)
+	}
+
+	var res *hc.Response
+
+	res, e = h.hc.PostJson(httpUrl, jsonData)
+
+	if e != nil {
+		return
+	}
+
+	defer res.Body.Close()
+
+	statsCode = res.StatusCode
+
+	switch statsCode {
+	case 200, 301, 302:
+		ret, e = res.ReadAll()
+	default:
+		ret, _ = res.ReadAll()
+		e = fmt.Errorf("http error statusCode=%v", res.StatusCode)
+	}
+
+	return
+}
+
 func (h *HttpClient) DoRequestRetJson(httpUrl string, params map[string]string, httpMethod int, ret interface{}, header map[string]string) (e error) {
 	var content []byte
 	content, e = h.DoRequest(httpUrl, params, httpMethod, header)
