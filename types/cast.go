@@ -61,6 +61,11 @@ func CastToFloat64(o interface{}) (ret float64, err error) {
 	case float64:
 		ret = v
 	case string:
+		if len(v) > 1 {
+			if v[0] == '+' {
+				v = v[1:]
+			}
+		}
 		ret, err = strconv.ParseFloat(v, 64)
 	default:
 		err = fmt.Errorf("Unknown type to float64 error: %v %T", o, o)
