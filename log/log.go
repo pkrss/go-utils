@@ -25,20 +25,21 @@ var timeLocation *time.Location
 func Println(p string) {
 	if out != nil {
 		if logRowsLimit != 0 {
+
+			if logRowsLimit > 0 {
+				logRowsCnt++
+				if logRowsCnt > logRowsLimit {
+					logRowsCnt = 0
+					out.Clean()
+				}
+			}
+
 			t := time.Now()
 			if timeLocation != nil {
 				t = t.In(timeLocation)
 			}
 			p2 := t.Format("2006-01-02 15:04:05 ") + p + logSplit
 			out.Write([]byte(p2))
-		}
-
-		if logRowsLimit > 0 {
-			logRowsCnt++
-			if logRowsCnt > logRowsLimit {
-				logRowsCnt = 0
-				out.Clean()
-			}
 		}
 	}
 	logOld.Println(p)
