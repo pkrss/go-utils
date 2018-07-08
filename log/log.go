@@ -2,7 +2,6 @@ package log
 
 import (
 	"fmt"
-	"io"
 	logOld "log"
 	"os"
 	"time"
@@ -10,14 +9,37 @@ import (
 	pkFile "github.com/pkrss/go-utils/file"
 )
 
-var out io.Writer
+type Writer interface {
+	Write(p []byte) (n int, err error)
+	Clean() (err error)
+}
 
-var logSplit string = "\n"
+var out Writer
+
+var logSplit = "\n"
+
+var logRowsLimit = -1
+var logRowsCnt = -1
+var timeLocation *time.Location
 
 func Println(p string) {
 	if out != nil {
-		p2 := time.Now().Format("2006-01-02 15:04:05 ") + p + logSplit
-		out.Write([]byte(p2))
+		if logRowsLimit != 0 {
+			t := time.Now()
+			if timeLocation != nil {
+				t = t.In(timeLocation)
+			}
+			p2 := t.Format("2006-01-02 15:04:05 ") + p + logSplit
+			out.Write([]byte(p2))
+		}
+
+		if logRowsLimit > 0 {
+			logRowsCnt++
+			if logRowsCnt > logRowsLimit {
+				logRowsCnt = 0
+				out.Clean()
+			}
+		}
 	}
 	logOld.Println(p)
 }
@@ -27,7 +49,7 @@ func Printf(format string, v ...interface{}) {
 	Println(p)
 }
 
-func SetOut(o io.Writer) io.Writer {
+func SetOut(o Writer) Writer {
 	old := out
 	out = o
 	return old
@@ -44,6 +66,13 @@ func (l *LogWriter) Write(p []byte) (n int, err error) {
 	return
 }
 
+func (l *LogWriter) Clean() (err error) {
+	if l.f != nil {
+		l.f.Truncate(0)
+	}
+	return
+}
+
 func (l *LogWriter) Close() {
 	if l.f != nil {
 		l.f.Close()
@@ -54,6 +83,19 @@ func (l *LogWriter) Close() {
 
 func SetLogSplitString(s string) {
 	logSplit = s
+}
+
+func SetLogRowsLimit(limit int) {
+	logRowsLimit = limit
+}
+
+func SetLogTimeZone(zone string) {
+	loc, e := time.LoadLocation(zone)
+	if e == nil {
+		timeLocation = loc
+	} else {
+		Printf("SetLogTimeZone(%s) error: %v", zone, e)
+	}
 }
 
 func NewOutLogWritter(file string) (ret *LogWriter, e error) {
