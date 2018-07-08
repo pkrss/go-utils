@@ -21,6 +21,7 @@ var logSplit = "\n"
 var logRowsLimit = -1
 var logRowsCnt = -1
 var timeLocation *time.Location
+var stdOut = false
 
 func Println(p string) {
 	if out != nil {
@@ -42,7 +43,9 @@ func Println(p string) {
 			out.Write([]byte(p2))
 		}
 	}
-	logOld.Println(p)
+	if stdOut {
+		logOld.Println(p)
+	}
 }
 
 func Printf(format string, v ...interface{}) {
@@ -88,6 +91,10 @@ func SetLogSplitString(s string) {
 
 func SetLogRowsLimit(limit int) {
 	logRowsLimit = limit
+}
+
+func SetStdOut(v bool) {
+	stdOut = v
 }
 
 func SetLogTimeZone(zone string) {
