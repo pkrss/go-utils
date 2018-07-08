@@ -4,6 +4,7 @@ import (
 	"fmt"
 	logOld "log"
 	"os"
+	"strings"
 	"time"
 
 	pkFile "github.com/pkrss/go-utils/file"
@@ -22,8 +23,17 @@ var logRowsLimit = -1
 var logRowsCnt = -1
 var timeLocation *time.Location
 var stdOut = false
+var logIgnoreStringList []string
 
+// Println ...
 func Println(p string) {
+	if logIgnoreStringList != nil {
+		for k := range logIgnoreStringList {
+			if strings.Contains(p, logIgnoreStringList[k]) {
+				return
+			}
+		}
+	}
 	if out != nil {
 		if logRowsLimit != 0 {
 
@@ -95,6 +105,10 @@ func SetLogRowsLimit(limit int) {
 
 func SetStdOut(v bool) {
 	stdOut = v
+}
+
+func SetLogIgnoreStringList(v []string) {
+	logIgnoreStringList = v
 }
 
 func SetLogTimeZone(zone string) {
