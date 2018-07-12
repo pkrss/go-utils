@@ -9,12 +9,17 @@ import (
 	"github.com/pkrss/go-utils/types"
 )
 
-var dataMapLocker *sync.RWMutex = &sync.RWMutex{}
-var dataMap map[string]interface{} = make(map[string]interface{})
+var dataMapLocker = &sync.RWMutex{}
+var dataMap = make(map[string]interface{})
 
-var dataMapInvalidLocker *sync.RWMutex = &sync.RWMutex{}
-var dataMapInvalid map[string]int64 = make(map[string]int64)
+var dataMapInvalidLocker = &sync.RWMutex{}
+var dataMapInvalid = make(map[string]int64)
 
+type invalidCbFun func(interface{})
+
+var dataMapInvalidCb = make(map[string]invalidCbFun)
+
+// DataSet ...
 func DataSet(key string, obj interface{}) {
 	dataMapLocker.Lock()
 
@@ -23,6 +28,7 @@ func DataSet(key string, obj interface{}) {
 	dataMapLocker.Unlock()
 }
 
+// DataGet ...
 func DataGet(key string) (obj interface{}, ok bool) {
 	dataMapLocker.Lock()
 
@@ -33,6 +39,7 @@ func DataGet(key string) (obj interface{}, ok bool) {
 	return
 }
 
+// DataDelete ...
 func DataDelete(key string) {
 	dataMapLocker.Lock()
 
@@ -58,7 +65,18 @@ func TmpPeriodDataSet(key string, obj interface{}, invalidSeconds int64) {
 	dataMapInvalidLocker.Unlock()
 }
 
+func TmpPeriodDataSetWithInvalidCb(key string, obj interface{}, invalidSeconds int64, invalidCb invalidCbFun) {
+	DataSet("tmp-"+key, obj)
+
+	dataMapInvalidLocker.Lock()
+	dataMapInvalid[key] = time.Now().Unix() + invalidSeconds
+	dataMapInvalidCb[key] = invalidCb
+	dataMapInvalidLocker.Unlock()
+}
+
 func TmpRunOnce(key string, obj interface{}, invalidSeconds int64) {
+
+	invalidCbMap := make(map[interface{}]interface{})
 
 	dataMapInvalidLocker.Lock()
 	d := make([]string, 0)
@@ -70,11 +88,24 @@ func TmpRunOnce(key string, obj interface{}, invalidSeconds int64) {
 	}
 
 	for _, v := range d {
+		cb, ok := dataMapInvalidCb[v]
+		if ok {
+			v2, ok2 := dataMapInvalid[v]
+			if ok2 {
+				invalidCbMap[cb] = v2
+			}
+		}
+
+		delete(dataMapInvalidCb, v)
 		delete(dataMapInvalid, v)
 		delete(dataMap, "tmp-"+v)
 	}
 
 	dataMapInvalidLocker.Unlock()
+
+	for cb, v := range invalidCbMap {
+		cb.(invalidCbFun)(v)
+	}
 }
 
 func TmpDataGet(key string, invalidSeconds int64) (obj interface{}, ok bool) {
