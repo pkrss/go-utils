@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	hc "github.com/ddliu/go-httpclient"
 )
@@ -77,6 +78,10 @@ func (h *HttpClient) DoRequest(httpUrl string, params map[string]string, httpMet
 }
 
 func (h *HttpClient) DoRequest2(httpUrl string, params map[string]string, httpMethod int, header map[string]string) (ret []byte, statsCode int, e error) {
+	ret, statsCode, _, e = h.DoRequest2WithRetHeader(httpUrl, params, httpMethod, header)
+	return
+}
+func (h *HttpClient) DoRequest2WithRetHeader(httpUrl string, params map[string]string, httpMethod int, header map[string]string) (ret []byte, statsCode int, rspHeader http.Header, e error) {
 
 	if params == nil {
 		params = make(map[string]string)
@@ -107,6 +112,7 @@ func (h *HttpClient) DoRequest2(httpUrl string, params map[string]string, httpMe
 
 	defer res.Body.Close()
 
+	rspHeader = res.Header
 	statsCode = res.StatusCode
 
 	switch statsCode {
@@ -121,7 +127,11 @@ func (h *HttpClient) DoRequest2(httpUrl string, params map[string]string, httpMe
 }
 
 func (h *HttpClient) DoRequestPostJson(httpUrl string, jsonData interface{}, header map[string]string) (ret []byte, statsCode int, e error) {
+	ret, statsCode, _, e = h.DoRequestPostJsonWithRetHeader(httpUrl, jsonData, header)
+	return
+}
 
+func (h *HttpClient) DoRequestPostJsonWithRetHeader(httpUrl string, jsonData interface{}, header map[string]string) (ret []byte, statsCode int, rspHeader http.Header, e error) {
 	if jsonData == nil {
 		jsonData = make(map[string]string)
 	}
@@ -139,6 +149,8 @@ func (h *HttpClient) DoRequestPostJson(httpUrl string, jsonData interface{}, hea
 	}
 
 	defer res.Body.Close()
+
+	rspHeader = res.Header
 
 	statsCode = res.StatusCode
 
