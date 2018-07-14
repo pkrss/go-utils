@@ -50,7 +50,7 @@ func MapMerge(dest map[string]interface{}, src map[string]interface{}) map[strin
 func MapGetValue(m map[string]interface{}, field string) (ret interface{}) {
 
 	if len(m) == 0 || field == "" {
-		return ""
+		return nil
 	}
 
 	ks := strings.Split(field, ".")
