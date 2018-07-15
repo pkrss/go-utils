@@ -23,7 +23,7 @@ func GetValueString(v interface{}) string {
 	case float64:
 		ret = strconv.FormatFloat(v2, 'g', 30, 64)
 	default:
-		ret = v.(string)
+		ret, _ = v.(string)
 	}
 
 	return ret
