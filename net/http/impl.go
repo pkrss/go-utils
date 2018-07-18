@@ -132,10 +132,10 @@ func (h *HttpClient) DoRequestPostJson(httpUrl string, jsonData interface{}, hea
 }
 
 func (h *HttpClient) DoRequestPostJsonWithRetHeader(httpUrl string, jsonData interface{}, header map[string]string) (ret []byte, statsCode int, rspHeader http.Header, e error) {
-	return h.DoRequestPostJsonWithRetHeader2(httpUrl, jsonData, header, Post)
+	return h.DoRequestJsonWithRetHeader2(httpUrl, jsonData, header, Post)
 }
 
-func (h *HttpClient) DoRequestPostJsonWithRetHeader2(httpUrl string, jsonData interface{}, header map[string]string, method int) (ret []byte, statsCode int, rspHeader http.Header, e error) {
+func (h *HttpClient) DoRequestJsonWithRetHeader2(httpUrl string, jsonData interface{}, header map[string]string, method int) (ret []byte, statsCode int, rspHeader http.Header, e error) {
 	if jsonData == nil {
 		jsonData = make(map[string]string)
 	}
