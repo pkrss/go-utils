@@ -171,7 +171,10 @@ func (h *HttpClient) DoRequestRetJson(httpUrl string, params map[string]string, 
 	if e != nil {
 		return
 	}
-	return json.Unmarshal(content, ret)
+	if ret != nil {
+		return json.Unmarshal(content, ret)
+	}
+	return nil
 }
 
 func NewHttpClient(proxy string) (ret *HttpClient, e error) {
