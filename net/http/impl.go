@@ -10,11 +10,12 @@ import (
 )
 
 const (
-	Get    = iota //0
-	Post          //1
-	Put           //2
-	Patch         //3
-	Delete        //4
+	Get      = iota //0
+	Post            //1
+	Put             //2
+	Patch           //3
+	Delete          //4
+	PutEmpty        //5
 )
 
 type HttpClient struct {
@@ -56,6 +57,9 @@ func (h *HttpClient) DoPut(httpUrl string, params map[string]string, header map[
 }
 func (h *HttpClient) DoPutRetJson(httpUrl string, params map[string]string, rsp interface{}, header map[string]string) (e error) {
 	return h.DoRequestRetJson(httpUrl, params, Put, rsp, header)
+}
+func (h *HttpClient) DoPutEmptyRetJson(httpUrl string, rsp interface{}, header map[string]string) (e error) {
+	return h.DoRequestRetJson(httpUrl, nil, PutEmpty, rsp, header)
 }
 
 func (h *HttpClient) DoPatch(httpUrl string, params map[string]string, header map[string]string) (ret []byte, e error) {
@@ -100,6 +104,8 @@ func (h *HttpClient) DoRequest2WithRetHeader(httpUrl string, params map[string]s
 		res, e = h.hc.Post(httpUrl, params)
 	case Put:
 		res, e = h.hc.PutJson(httpUrl, &params)
+	case PutEmpty:
+		res, e = h.hc.Put(httpUrl, nil)
 	case Patch:
 		res, e = h.hc.Patch(httpUrl, params)
 	case Delete:
