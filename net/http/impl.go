@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	hc "github.com/ddliu/go-httpclient"
@@ -183,6 +184,7 @@ func (h *HttpClient) DoRequestRetJson(httpUrl string, params map[string]string, 
 	var content []byte
 	content, e = h.DoRequest(httpUrl, params, httpMethod, header)
 	if e != nil {
+		log.Println(string(content))
 		return
 	}
 	if ret != nil {

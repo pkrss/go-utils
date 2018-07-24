@@ -74,7 +74,7 @@ func TmpPeriodDataSetWithInvalidCb(key string, obj interface{}, invalidSeconds i
 	dataMapInvalidLocker.Unlock()
 }
 
-func TmpRunOnce(key string, obj interface{}, invalidSeconds int64) {
+func TmpRunOnce(invalidSeconds int64) {
 
 	invalidCbMap := make(map[interface{}]interface{})
 
