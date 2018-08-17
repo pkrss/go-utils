@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
+	"time"
 
 	hc "github.com/ddliu/go-httpclient"
 )
@@ -130,6 +132,13 @@ func (h *HttpClient) DoRequest2WithRetHeader(httpUrl string, params map[string]s
 		e = fmt.Errorf("http error statusCode=%v", res.StatusCode)
 	}
 
+	if (statsCode >= 500) && (statsCode < 600) { // too busy
+		v, ok := rspHeader["Server"]
+		if ok && (len(v) > 0) && (strings.Contains(v[0], "cloudflare")) {
+			time.Sleep(time.Second)
+		}
+	}
+
 	return
 }
 
@@ -157,6 +166,8 @@ func (h *HttpClient) DoRequestJsonWithRetHeader2(httpUrl string, jsonData interf
 		res, e = h.hc.PostJson(httpUrl, jsonData)
 	} else if method == Put {
 		res, e = h.hc.PutJson(httpUrl, jsonData)
+	} else if method == Get {
+		res, e = h.hc.Get(httpUrl, jsonData)
 	}
 
 	if e != nil {
@@ -175,6 +186,13 @@ func (h *HttpClient) DoRequestJsonWithRetHeader2(httpUrl string, jsonData interf
 	default:
 		ret, _ = res.ReadAll()
 		e = fmt.Errorf("http error statusCode=%v", res.StatusCode)
+	}
+
+	if (statsCode >= 500) && (statsCode < 600) { // too busy
+		v, ok := rspHeader["Server"]
+		if ok && (len(v) > 0) && (strings.Contains(v[0], "cloudflare")) {
+			time.Sleep(time.Second)
+		}
 	}
 
 	return

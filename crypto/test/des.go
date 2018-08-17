@@ -15,7 +15,7 @@ func main() {
 		return
 	}
 
-	log.Println("target:" + encrypted)
+	log.Println("target: " + encrypted)
 
 	key2, e := crypto.DesDecrypt(encrypted, key)
 	if e != nil {
