@@ -1,6 +1,7 @@
 package tmp
 
 import (
+	"encoding/json"
 	"errors"
 	"strconv"
 	"sync"
@@ -143,6 +144,20 @@ func FileDataGetString(key string) (ret string, e error) {
 	ret, e = gFuncFileRead(key)
 
 	return
+}
+
+func FileDataGetObject(key string, ret interface{}) (e error) {
+
+	s, e2 := FileDataGetString(key)
+	if e2 != nil {
+		return
+	}
+	if s == "" {
+		e = errors.New("FileDataGetObject() fail, not exist: " + key)
+		return
+	}
+
+	return json.Unmarshal([]byte(s), ret)
 }
 
 func FileDataSet(key string, obj interface{}) (e error) {
