@@ -135,7 +135,7 @@ func (h *HttpClient) DoRequest2WithRetHeader(httpUrl string, params map[string]s
 	if (statsCode >= 500) && (statsCode < 600) { // too busy
 		v, ok := rspHeader["Server"]
 		if ok && (len(v) > 0) && (strings.Contains(v[0], "cloudflare")) {
-			time.Sleep(2 * time.Second)
+			time.Sleep(30 * time.Second)
 		}
 	}
 
