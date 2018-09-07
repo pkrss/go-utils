@@ -23,6 +23,8 @@ import (
 
 var Config map[string]interface{}
 
+var confFileRelPath = "./conf/"
+
 // func init() {
 // 	LoadConfigFile("./conf/config.json")
 // }
@@ -31,6 +33,11 @@ func InitByConfigFile(confFile ...string) {
 	f := ""
 	if len(confFile) > 0 {
 		f = confFile[0]
+
+		p := strings.Index(f, "./conf/")
+		if p >= 0 {
+			confFileRelPath = f[0:p] + confFileRelPath
+		}
 	} else {
 		f = "./conf/config.json"
 	}
@@ -168,4 +175,9 @@ func GetSubObject(key string) (ret map[string]interface{}) {
 		return v2.(map[string]interface{})
 	}
 	return
+}
+
+// ReadFileData fileName="exchanges/zb/zb_rate.html" => "./conf/exchanges/zb/zb_rate.html"
+func ReadFileData(fileName string) ([]byte, error) {
+	return ioutil.ReadFile(confFileRelPath + fileName)
 }
