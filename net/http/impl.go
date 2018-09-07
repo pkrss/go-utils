@@ -1,6 +1,8 @@
 package impl
 
 import (
+	"os"
+
 	pkReflect "github.com/pkrss/go-utils/reflect"
 
 	"encoding/base64"
@@ -14,7 +16,7 @@ import (
 	hc "github.com/ddliu/go-httpclient"
 )
 
-// var OsExitWhenCloudflare50x = false
+var OsExitWhenCloudflare50x = false
 
 const (
 	Get      = iota //0
@@ -136,11 +138,13 @@ func (h *HttpClient) DoRequest2WithRetHeader(httpUrl string, params map[string]s
 		e = fmt.Errorf("http error statusCode=%v", res.StatusCode)
 	}
 
-	if (statsCode >= 500) && (statsCode < 600) { // too busy  //  && (OsExitWhenCloudflare50x)
+	if (statsCode >= 500) && (statsCode < 600) { // too busy  //
 		v, ok := rspHeader["Server"]
 		if ok && (len(v) > 0) && (strings.Contains(v[0], "cloudflare")) {
-			// time.Sleep(1 * time.Second)
-			// os.Exit(-97)
+			time.Sleep(1 * time.Second)
+			if OsExitWhenCloudflare50x {
+				os.Exit(-97)
+			}
 			pkReflect.SetStructFieldValue(h.hc, "transport", nil, false)
 		}
 	}
