@@ -54,7 +54,11 @@ func DataDelete(key string) {
 }
 
 func TmpDataSet(key string, obj interface{}) {
-	DataSet("tmpTime-"+key, strconv.FormatInt(time.Now().Unix(), 10))
+	TmpDataSet2(key, obj, strconv.FormatInt(time.Now().Unix(), 10))
+}
+
+func TmpDataSet2(key string, obj interface{}, t string) {
+	DataSet("tmpTime-"+key, t)
 	DataSet("tmp-"+key, obj)
 }
 
@@ -175,4 +179,36 @@ func FileDataSet(key string, obj interface{}) (e error) {
 	e = gFuncFileWrite(key, s)
 
 	return
+}
+
+func FileTmpDataGetObject(key string, invalidSeconds int64, ret interface{}) (obj interface{}, ok bool) {
+	obj, ok = TmpDataGet(key, invalidSeconds)
+	if ok {
+		return
+	}
+
+	s, e := FileDataGetString("tmpTime-" + key)
+	if e == nil {
+		i, e2 := strconv.ParseInt(s, 10, 64)
+		if e2 == nil {
+			now := time.Now().Unix()
+			if now-i < invalidSeconds {
+				e = FileDataGetObject(key, ret)
+				if e == nil {
+					TmpDataSet2(key, ret, strconv.FormatInt(i, 10))
+					obj = ret
+					ok = true
+					return
+				}
+			}
+		}
+	}
+
+	return
+}
+
+func FileTmpDataSetObject(key string, ret interface{}) {
+	TmpDataSet(key, ret)
+	FileDataSet(key, ret)
+	FileDataSet("tmpTime-"+key, strconv.FormatInt(time.Now().Unix(), 10))
 }
