@@ -181,3 +181,8 @@ func GetSubObject(key string) (ret map[string]interface{}) {
 func ReadFileData(fileName string) ([]byte, error) {
 	return ioutil.ReadFile(confFileRelPath + fileName)
 }
+
+// WriteFileData ...
+func WriteFileData(fileName string, data []byte) (error) {
+	return ioutil.WriteFile(confFileRelPath+fileName, data, 0644)
+}

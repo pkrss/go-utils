@@ -3,6 +3,7 @@ package tmp
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -199,6 +200,8 @@ func FileTmpDataGetObject(key string, invalidSeconds int64, ret interface{}) (ob
 					obj = ret
 					ok = true
 					return
+				} else {
+					log.Println(e.Error())
 				}
 			}
 		}
@@ -209,6 +212,12 @@ func FileTmpDataGetObject(key string, invalidSeconds int64, ret interface{}) (ob
 
 func FileTmpDataSetObject(key string, ret interface{}) {
 	TmpDataSet(key, ret)
-	FileDataSet(key, ret)
-	FileDataSet("tmpTime-"+key, strconv.FormatInt(time.Now().Unix(), 10))
+	e := FileDataSet(key, ret)
+	if e != nil {
+		log.Println(e.Error())
+	}
+	e = FileDataSet("tmpTime-"+key, strconv.FormatInt(time.Now().Unix(), 10))
+	if e != nil {
+		log.Println(e.Error())
+	}
 }
