@@ -25,6 +25,13 @@ var Config map[string]interface{}
 
 var confFileRelPath = "./conf/"
 
+func GetConfFileRelPath() string {
+	return confFileRelPath
+}
+func SetConfFileRelPath(p string) {
+	confFileRelPath = p
+}
+
 // func init() {
 // 	LoadConfigFile("./conf/config.json")
 // }
@@ -183,6 +190,6 @@ func ReadFileData(fileName string) ([]byte, error) {
 }
 
 // WriteFileData ...
-func WriteFileData(fileName string, data []byte) (error) {
+func WriteFileData(fileName string, data []byte) error {
 	return ioutil.WriteFile(confFileRelPath+fileName, data, 0644)
 }
