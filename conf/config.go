@@ -50,6 +50,10 @@ func InitByConfigFile(confFile ...string) {
 	}
 	LoadConfigFile(&Config, f)
 
+	if Config == nil {
+		Config = make(map[string]interface{})
+	}
+
 	s, ok := getEnvString("config.json")
 	if ok && (s != "") {
 		var m2 map[string]interface{}
