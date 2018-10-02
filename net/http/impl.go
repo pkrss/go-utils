@@ -37,6 +37,8 @@ func (h *HttpClient) Init(proxy string) (e error) {
 	if proxy != "" {
 		m := make(map[interface{}]interface{})
 		m[hc.OPT_PROXY] = proxy
+		m["Pragma"] = "no-cache"
+		m["Cache-Control"] = "no-cache, must-revalidate"
 		h.hc.Defaults(m)
 	}
 
