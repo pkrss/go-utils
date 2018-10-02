@@ -137,7 +137,7 @@ func (h *HttpClient) DoRequest2WithRetHeader(httpUrl string, params map[string]s
 		ret, e = res.ReadAll()
 	default:
 		ret, _ = res.ReadAll()
-		e = fmt.Errorf("debug output http error statusCode=%v", res.StatusCode)
+		e = fmt.Errorf("http error statusCode=%v", res.StatusCode)
 	}
 
 	h.onDoCloudflareError(statsCode, rspHeader)
