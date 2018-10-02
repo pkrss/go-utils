@@ -138,7 +138,16 @@ func (h *HttpClient) DoRequest2WithRetHeader(httpUrl string, params map[string]s
 		e = fmt.Errorf("debug output http error statusCode=%v", res.StatusCode)
 	}
 
-	if (statsCode >= 500) && (statsCode < 600) { // too busy  //
+	h.onDoCloudflareError(statsCode, rspHeader)
+
+	return
+}
+
+func (h *HttpClient) onDoCloudflareError(statsCode int, rspHeader http.Header) {
+	if (statsCode >= 400) && (statsCode < 600) { // too busy  //
+		if rspHeader == nil {
+			return
+		}
 		v, ok := rspHeader["Server"]
 		if ok && (len(v) > 0) && (strings.Contains(v[0], "cloudflare")) {
 			time.Sleep(1 * time.Second)
@@ -148,8 +157,6 @@ func (h *HttpClient) DoRequest2WithRetHeader(httpUrl string, params map[string]s
 			pkReflect.SetStructFieldValue(h.hc, "transport", nil, false)
 		}
 	}
-
-	return
 }
 
 func (h *HttpClient) DoRequestPostJson(httpUrl string, jsonData interface{}, header map[string]string) (ret []byte, statsCode int, e error) {
@@ -198,12 +205,7 @@ func (h *HttpClient) DoRequestJsonWithRetHeader2(httpUrl string, jsonData interf
 		e = fmt.Errorf("http error statusCode=%v", res.StatusCode)
 	}
 
-	if (statsCode >= 500) && (statsCode < 600) { // too busy
-		v, ok := rspHeader["Server"]
-		if ok && (len(v) > 0) && (strings.Contains(v[0], "cloudflare")) {
-			time.Sleep(time.Second)
-		}
-	}
+	h.onDoCloudflareError(statsCode, rspHeader)
 
 	return
 }
