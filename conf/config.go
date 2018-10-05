@@ -193,6 +193,15 @@ func ReadFileData(fileName string) ([]byte, error) {
 	return ioutil.ReadFile(confFileRelPath + fileName)
 }
 
+// ReadFileObject ...
+func ReadFileObject(fileName string, outObj interface{}) error {
+	content, e := ioutil.ReadFile(confFileRelPath + fileName)
+	if e != nil {
+		return e
+	}
+	return json.Unmarshal(content, outObj)
+}
+
 // WriteFileData ...
 func WriteFileData(fileName string, data []byte) error {
 	return ioutil.WriteFile(confFileRelPath+fileName, data, 0644)
