@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/cookiejar"
 	"strings"
 	"time"
 
@@ -37,7 +38,12 @@ func (h *HttpClient) Init(proxy string) (e error) {
 	if proxy != "" {
 		m := make(map[interface{}]interface{})
 		m[hc.OPT_PROXY] = proxy
-		m[hc.OPT_COOKIEJAR] = false
+
+		jar, err := cookiejar.New(nil)
+		if err == nil {
+			m[hc.OPT_COOKIEJAR] = jar
+		}
+
 		m["Pragma"] = "no-cache"
 		m["Cache-Control"] = "no-cache, must-revalidate"
 		h.hc.Defaults(m)
