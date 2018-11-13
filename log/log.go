@@ -121,6 +121,10 @@ func SetLogTimeZone(zone string) {
 }
 
 func NewOutLogWritter(file string) (ret *LogWriter, e error) {
+	return NewOutLogWritter2(file, false)
+}
+
+func NewOutLogWritter2(file string, bak bool) (ret *LogWriter, e error) {
 	root := pkFile.FileDir(file)
 
 	logOld.Println("prepare createDir: " + root)
