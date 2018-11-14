@@ -138,20 +138,20 @@ func NewOutLogWritter2(file string, bak bool) (ret *LogWriter, e error) {
 	}
 
 	if bak {
-		if _, err := os.Stat(file); os.IsExist(err) {
+		// if _, err := os.Stat(file); os.IsExist(err) {
 
-			in, err := os.Open(file)
+		in, err := os.Open(file)
+		if err == nil {
+			defer in.Close()
+
+			out, err := os.Create(file + "_" + strconv.FormatInt(time.Now().Unix(), 10))
 			if err == nil {
-				defer in.Close()
+				defer out.Close()
 
-				out, err := os.Create(file + "_" + strconv.FormatInt(time.Now().Unix(), 10))
-				if err == nil {
-					defer out.Close()
-
-					io.Copy(out, in)
-				}
+				io.Copy(out, in)
 			}
 		}
+		// }
 	}
 
 	f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
