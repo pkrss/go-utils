@@ -40,6 +40,10 @@ func MapMerge(dest map[string]interface{}, src map[string]interface{}) map[strin
 		return dest
 	}
 
+	if dest == nil {
+		dest = make(map[string]interface{})
+	}
+
 	for key, val := range src {
 		dest[key] = val
 	}
