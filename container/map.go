@@ -96,6 +96,38 @@ func MapGetStringValue(m map[string]interface{}, field string) (ret string) {
 	return
 }
 
+func MapGetInt64Value(m map[string]interface{}, field string) (ret int64, e error) {
+	v := MapGetValue(m, field)
+	if v != nil {
+		return types.CastToInt64(v)
+	}
+	return
+}
+
+func MapGetIntValue(m map[string]interface{}, field string) (ret int, e error) {
+	v := MapGetValue(m, field)
+	if v != nil {
+		return types.CastToInt(v)
+	}
+	return
+}
+
+func MapGetFloat64Value(m map[string]interface{}, field string) (ret float64, e error) {
+	v := MapGetValue(m, field)
+	if v != nil {
+		return types.CastToFloat64(v)
+	}
+	return
+}
+
+func MapGetFloat32Value(m map[string]interface{}, field string) (ret float32, e error) {
+	v := MapGetValue(m, field)
+	if v != nil {
+		return types.CastTofloat32(v)
+	}
+	return
+}
+
 func MapKeys(m map[string]interface{}) []string {
 	ret := make([]string, 0)
 	for k, _ := range m {
