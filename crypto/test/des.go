@@ -8,7 +8,7 @@ import (
 
 func main() {
 	key := "pkrss-1"
-	origData := "23"
+	origData := ""
 	encrypted, e := crypto.DesEncrypt(origData, key)
 	if e != nil {
 		log.Println(e.Error())
