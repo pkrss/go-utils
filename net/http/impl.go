@@ -183,10 +183,6 @@ func (h *HttpClient) DoRequestJsonWithRetHeader2(httpUrl string, jsonData interf
 		jsonData = make(map[string]string)
 	}
 
-	if header != nil && len(header) > 0 {
-		h.hc.WithHeaders(header)
-	}
-
 	var res *hc.Response
 
 	sMethod := "GET"
@@ -203,7 +199,7 @@ func (h *HttpClient) DoRequestJsonWithRetHeader2(httpUrl string, jsonData interf
 	// 	sMethod = "OPTION"
 	// }
 
-	res, e = h.SendJson(sMethod, httpUrl, jsonData)
+	res, e = h.SendJson(sMethod, httpUrl, jsonData, header)
 
 	if e != nil {
 		return
@@ -228,8 +224,10 @@ func (h *HttpClient) DoRequestJsonWithRetHeader2(httpUrl string, jsonData interf
 	return
 }
 
-func (h *HttpClient) SendJson(method string, url string, data interface{}) (*hc.Response, error) {
-	headers := make(map[string]string)
+func (h *HttpClient) SendJson(method string, url string, data interface{}, headers map[string]string) (*hc.Response, error) {
+	if headers == nil {
+		headers = make(map[string]string)
+	}
 	headers["Content-Type"] = "application/json"
 
 	var body []byte
