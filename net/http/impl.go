@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"bytes"
 	"os"
 
 	pkReflect "github.com/pkrss/go-utils/reflect"
@@ -188,13 +189,21 @@ func (h *HttpClient) DoRequestJsonWithRetHeader2(httpUrl string, jsonData interf
 
 	var res *hc.Response
 
+	sMethod := "GET"
 	if method == Post {
-		res, e = h.hc.PostJson(httpUrl, jsonData)
+		sMethod = "POST"
 	} else if method == Put {
-		res, e = h.hc.PutJson(httpUrl, jsonData)
-	} else if method == Get {
-		res, e = h.hc.Get(httpUrl, jsonData)
+		sMethod = "PUT"
+	} else if method == Delete {
+		sMethod = "DELETE"
+	} else if method == Patch {
+		sMethod = "PATCH"
 	}
+	// else if method == Option {
+	// 	sMethod = "OPTION"
+	// }
+
+	res, e = h.SendJson(sMethod, httpUrl, jsonData)
 
 	if e != nil {
 		return
@@ -217,6 +226,27 @@ func (h *HttpClient) DoRequestJsonWithRetHeader2(httpUrl string, jsonData interf
 	h.onDoCloudflareError(statsCode, rspHeader)
 
 	return
+}
+
+func (h *HttpClient) SendJson(method string, url string, data interface{}) (*hc.Response, error) {
+	headers := make(map[string]string)
+	headers["Content-Type"] = "application/json"
+
+	var body []byte
+	switch t := data.(type) {
+	case []byte:
+		body = t
+	case string:
+		body = []byte(t)
+	default:
+		var err error
+		body, err = json.Marshal(data)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return h.hc.Do(method, url, headers, bytes.NewReader(body))
 }
 
 func (h *HttpClient) DoRequestRetJson(httpUrl string, params map[string]string, httpMethod int, ret interface{}, header map[string]string) (e error) {
