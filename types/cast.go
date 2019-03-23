@@ -145,9 +145,14 @@ func CastToObject(in interface{}, out interface{}) (err error) {
 		return errors.New("CastToObject in is null")
 	}
 	var content []byte
-	content, err = json.Marshal(in)
-	if err != nil {
-		return
+	if content, err = json.Marshal(in); err != nil {
+		return err
+	}
+
+	switch v := out.(type) {
+	case *string:
+		*v = string(content)
+		return nil
 	}
 
 	return json.Unmarshal(content, out)
