@@ -147,7 +147,7 @@ func CastToObject(in interface{}, out interface{}) (err error) {
 
 	var content []byte
 
-	switch v := out.(type) {
+	switch v := in.(type) {
 	case string:
 		content = []byte(v)
 	case []byte:
