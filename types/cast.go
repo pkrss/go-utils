@@ -61,10 +61,12 @@ func CastToFloat64(o interface{}) (ret float64, err error) {
 	case float64:
 		ret = v
 	case string:
-		if len(v) > 1 {
-			if v[0] == '+' {
-				v = v[1:]
-			}
+		l := len(v)
+		if l == 0 {
+			return
+		}
+		if v[0] == '+' {
+			v = v[1:]
 		}
 		ret, err = strconv.ParseFloat(v, 64)
 	default:
