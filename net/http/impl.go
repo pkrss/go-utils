@@ -95,16 +95,16 @@ func (h *HttpClient) DoDeleteRetJson(httpUrl string, params map[string]string, r
 	return h.DoRequestRetJson(httpUrl, params, Delete, rsp, header)
 }
 
-func (h *HttpClient) DoRequest(httpUrl string, params map[string]string, httpMethod int, header map[string]string) (ret []byte, e error) {
+func (h *HttpClient) DoRequest(httpUrl string, params interface{}, httpMethod int, header map[string]string) (ret []byte, e error) {
 	ret, _, e = h.DoRequest2(httpUrl, params, httpMethod, header)
 	return
 }
 
-func (h *HttpClient) DoRequest2(httpUrl string, params map[string]string, httpMethod int, header map[string]string) (ret []byte, statsCode int, e error) {
+func (h *HttpClient) DoRequest2(httpUrl string, params interface{}, httpMethod int, header map[string]string) (ret []byte, statsCode int, e error) {
 	ret, statsCode, _, e = h.DoRequest2WithRetHeader(httpUrl, params, httpMethod, header)
 	return
 }
-func (h *HttpClient) DoRequest2WithRetHeader(httpUrl string, params map[string]string, httpMethod int, header map[string]string) (ret []byte, statsCode int, rspHeader http.Header, e error) {
+func (h *HttpClient) DoRequest2WithRetHeader(httpUrl string, params interface{}, httpMethod int, header map[string]string) (ret []byte, statsCode int, rspHeader http.Header, e error) {
 
 	if params == nil {
 		params = make(map[string]string)
@@ -126,7 +126,7 @@ func (h *HttpClient) DoRequest2WithRetHeader(httpUrl string, params map[string]s
 	case PutEmpty:
 		res, e = h.hc.Put(httpUrl, nil)
 	case Patch:
-		res, e = h.hc.Patch(httpUrl, params)
+		res, e = h.hc.Patch(httpUrl, params.(map[string]string))
 	case Delete:
 		res, e = h.hc.Delete(httpUrl, params)
 	}
