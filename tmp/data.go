@@ -158,7 +158,7 @@ func FileDataGetObject(key string, ret interface{}) (e error) {
 		return
 	}
 	if s == "" {
-		e = errors.New("FileDataGetObject() fail, not exist: " + key)
+		// e = errors.New("FileDataGetObject() fail, not exist: " + key)
 		return
 	}
 
