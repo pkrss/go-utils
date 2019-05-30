@@ -27,6 +27,7 @@ const (
 	Patch           //3
 	Delete          //4
 	PutEmpty        //5
+	PostJSON        //6
 )
 
 type HttpClient struct {
@@ -121,6 +122,8 @@ func (h *HttpClient) DoRequest2WithRetHeader(httpUrl string, params interface{},
 		res, e = h.hc.Get(httpUrl, params)
 	case Post:
 		res, e = h.hc.Post(httpUrl, params)
+	case PostJSON:
+		res, e = h.hc.PostJson(httpUrl, params)
 	case Put:
 		res, e = h.hc.PutJson(httpUrl, &params)
 	case PutEmpty:
