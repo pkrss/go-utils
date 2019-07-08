@@ -93,7 +93,17 @@ func LoadConfigFile(ob interface{}, confFile string) error {
 	return err
 }
 
+var tmpStringMap = make(map[string]string)
+
+// SetTmpString ...
+func SetTmpString(key, val string) {
+	tmpStringMap[key] = val
+}
+
 func getEnvString(key string) (ret string, ok bool) {
+	if ret, ok = tmpStringMap[key]; ok {
+		return ret, ok
+	}
 	v, ok := os.LookupEnv(key)
 
 	if !ok && strings.Contains(key, ".") {

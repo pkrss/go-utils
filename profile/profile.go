@@ -14,10 +14,12 @@ func SetMyGetString(myGetString MyGetString) {
 }
 
 func ProfileReadString(key string, def ...string) string {
-	v, ok := os.LookupEnv(key)
 
-	if !ok && gMyGetString != nil {
+	var v string
+	if gMyGetString != nil {
 		v = gMyGetString(key)
+	} else {
+		v, _ = os.LookupEnv(key)
 	}
 
 	if v == "" {
