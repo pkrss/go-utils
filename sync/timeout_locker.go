@@ -12,9 +12,9 @@ type TimeOutLocker struct {
 
 // WaitTimeOut ...
 func (l *TimeOutLocker) WaitTimeOut(timeout time.Duration) {
+	l.done = make(chan int)
 	l.locked.Set(true)
 
-	l.done = make(chan int)
 	select {
 	case <-time.After(timeout): // timed out
 	case <-l.done: // Wait returned
