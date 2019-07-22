@@ -1,6 +1,7 @@
 package log
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	logOld "log"
@@ -57,6 +58,16 @@ func Println(p string) {
 	}
 	if stdOut {
 		logOld.Println(p)
+	}
+}
+
+func PrintObj(obj interface{}) {
+	if obj == nil {
+		Println("obj is nil")
+		return
+	}
+	if content, _ := json.Marshal(obj); content != nil {
+		Println(string(content))
 	}
 }
 
