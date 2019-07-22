@@ -15,19 +15,24 @@ type TimeOutLocker struct {
 // WaitTimeOut ...
 func (l *TimeOutLocker) WaitTimeOut(timeout time.Duration) {
 
-	if l.done == nil {
-		l.done = make(chan int)
+	l.locker.Lock()
+	if l.done != nil {
+		close(l.done)
 	}
+	l.done = make(chan int)
 	l.locked.Set(true)
+	l.locker.Unlock()
 
 	select {
 	case <-time.After(timeout): // timed out
 	case <-l.done: // Wait returned
 	}
 
-	// l.locker.Lock()
+	l.locker.Lock()
 	l.locked.Set(false)
-	// l.locker.Unlock()
+	close(l.done)
+	l.done = nil
+	l.locker.Unlock()
 }
 
 // Unlock ...
