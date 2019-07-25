@@ -115,6 +115,36 @@ func CastToString(o interface{}) (ret string, err error) {
 	return
 }
 
+func CastToIntString(o interface{}) (ret string, err error) {
+	if o == nil {
+		return
+	}
+	t := reflect.ValueOf(o)
+	if t.Kind() == reflect.Ptr {
+		return CastToIntString(t.Elem().Interface())
+	}
+	switch v := o.(type) {
+	case int64:
+		ret = strconv.FormatInt(v, 10)
+	case int:
+		ret = strconv.FormatInt(int64(v), 10)
+	case float32:
+		ret = strconv.FormatInt(int64(v), 10)
+	case float64:
+		ret = strconv.FormatInt(int64(v), 10)
+	case string:
+		ret = v
+	default:
+		var by []byte
+		by, err = json.Marshal(&v)
+		if err != nil {
+			return
+		}
+		ret = string(by)
+	}
+	return
+}
+
 func CastToBool(o interface{}) (ret bool, err error) {
 	if o == nil {
 		return
