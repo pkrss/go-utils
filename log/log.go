@@ -43,8 +43,7 @@ func Println(p string) {
 			if logRowsLimit > 0 {
 				logRowsCnt++
 				if logRowsCnt > logRowsLimit {
-					logRowsCnt = 0
-					out.Clean()
+					Clean()
 				}
 			}
 
@@ -58,6 +57,13 @@ func Println(p string) {
 	}
 	if stdOut {
 		logOld.Println(p)
+	}
+}
+
+func Clean() {
+	logRowsCnt = 0
+	if out != nil {
+		out.Clean()
 	}
 }
 
