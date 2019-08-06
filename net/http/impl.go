@@ -107,34 +107,9 @@ func (h *HttpClient) DoRequest2(httpUrl string, params interface{}, httpMethod i
 }
 func (h *HttpClient) DoRequest2WithRetHeader(httpUrl string, params interface{}, httpMethod int, header map[string]string) (ret []byte, statsCode int, rspHeader http.Header, e error) {
 
-	if params == nil {
-		params = make(map[string]string)
-	}
-
-	if header != nil && len(header) > 0 {
-		h.hc.WithHeaders(header)
-	}
-
 	var res *hc.Response
 
-	switch httpMethod {
-	case Get:
-		res, e = h.hc.Get(httpUrl, params)
-	case Post:
-		res, e = h.hc.Post(httpUrl, params)
-	case PostJSON:
-		res, e = h.hc.PostJson(httpUrl, params)
-	case Put:
-		res, e = h.hc.PutJson(httpUrl, &params)
-	case PutEmpty:
-		res, e = h.hc.Put(httpUrl, nil)
-	case Patch:
-		res, e = h.hc.Patch(httpUrl, params.(map[string]string))
-	case Delete:
-		res, e = h.hc.Delete(httpUrl, params)
-	}
-
-	if e != nil {
+	if res, e = h.DoRequest2WithRetRsp(httpUrl, params, httpMethod, header); e != nil {
 		return
 	}
 
@@ -152,6 +127,36 @@ func (h *HttpClient) DoRequest2WithRetHeader(httpUrl string, params interface{},
 	}
 
 	h.onDoCloudflareError(statsCode, rspHeader)
+
+	return
+}
+
+func (h *HttpClient) DoRequest2WithRetRsp(httpUrl string, params interface{}, httpMethod int, header map[string]string) (res *hc.Response, e error) {
+
+	if params == nil {
+		params = make(map[string]string)
+	}
+
+	if header != nil && len(header) > 0 {
+		h.hc.WithHeaders(header)
+	}
+
+	switch httpMethod {
+	case Get:
+		res, e = h.hc.Get(httpUrl, params)
+	case Post:
+		res, e = h.hc.Post(httpUrl, params)
+	case PostJSON:
+		res, e = h.hc.PostJson(httpUrl, params)
+	case Put:
+		res, e = h.hc.PutJson(httpUrl, &params)
+	case PutEmpty:
+		res, e = h.hc.Put(httpUrl, nil)
+	case Patch:
+		res, e = h.hc.Patch(httpUrl, params.(map[string]string))
+	case Delete:
+		res, e = h.hc.Delete(httpUrl, params)
+	}
 
 	return
 }
