@@ -4,9 +4,9 @@ import "sync"
 
 // OrderedMap ...
 type OrderedMap struct {
-	IDList     []string `json:"idList"`
-	idMap      map[string]interface{}
-	limitCount int
+	IDList     []string               `json:"idList"`
+	IDMap      map[string]interface{} `json:"idMap"`
+	LimitCount int                    `json:"LimitCount"`
 	locker     *sync.RWMutex
 }
 
@@ -20,11 +20,11 @@ func (c *OrderedMap) Init(limitCount int) {
 	if c.IDList == nil {
 		c.IDList = make([]string, 0, limitCount+1)
 	}
-	if c.idMap == nil {
-		c.idMap = make(map[string]interface{})
+	if c.IDMap == nil {
+		c.IDMap = make(map[string]interface{})
 	}
 	for _, v := range c.IDList {
-		c.idMap[v] = 1
+		c.IDMap[v] = 1
 	}
 	c.locker = &sync.RWMutex{}
 }
@@ -33,7 +33,7 @@ func (c *OrderedMap) Init(limitCount int) {
 func (c *OrderedMap) Exist(k string) bool {
 	c.locker.RLock()
 	defer c.locker.RUnlock()
-	_, ok := c.idMap[k]
+	_, ok := c.IDMap[k]
 	return ok
 }
 
@@ -41,7 +41,7 @@ func (c *OrderedMap) Exist(k string) bool {
 func (c *OrderedMap) Get(k string) (v interface{}, ok bool) {
 	c.locker.RLock()
 	defer c.locker.RUnlock()
-	v, ok = c.idMap[k]
+	v, ok = c.IDMap[k]
 	return v, ok
 }
 
@@ -51,8 +51,8 @@ func (c *OrderedMap) Put(k string, v interface{}) bool {
 	c.locker.Lock()
 	defer c.locker.Unlock()
 
-	_, ok := c.idMap[k]
-	c.idMap[k] = v
+	_, ok := c.IDMap[k]
+	c.IDMap[k] = v
 
 	if ok {
 		return false
@@ -60,11 +60,11 @@ func (c *OrderedMap) Put(k string, v interface{}) bool {
 
 	c.IDList = append(c.IDList, k)
 
-	if cnt := len(c.IDList); cnt > c.limitCount {
-		for i, l := 0, cnt-c.limitCount; i < l; i++ {
-			delete(c.idMap, c.IDList[i])
+	if cnt := len(c.IDList); cnt > c.LimitCount {
+		for i, l := 0, cnt-c.LimitCount; i < l; i++ {
+			delete(c.IDMap, c.IDList[i])
 		}
-		c.IDList = c.IDList[cnt-c.limitCount:]
+		c.IDList = c.IDList[cnt-c.LimitCount:]
 	}
 
 	return true
@@ -82,7 +82,7 @@ func (c *OrderedMap) Info() map[string]interface{} {
 		idList[k] = v
 	}
 	idMap := make(map[string]interface{})
-	for k, v := range c.idMap {
+	for k, v := range c.IDMap {
 		idMap[k] = v
 	}
 	ret["idList"] = idList
