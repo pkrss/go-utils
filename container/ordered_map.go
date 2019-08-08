@@ -67,3 +67,24 @@ func (c *OrderedMap) Put(k string, v interface{}) bool {
 
 	return true
 }
+
+// Info ...
+func (c *OrderedMap) Info(k string, v interface{}) map[string]interface{} {
+
+	c.locker.RLock()
+	defer c.locker.RUnlock()
+
+	ret := make(map[string]interface{})
+	idList := make([]string, len(c.IDList))
+	for k, v := range c.IDList {
+		idList[k] = v
+	}
+	idMap := make(map[string]interface{})
+	for k, v := range c.idMap {
+		idMap[k] = v
+	}
+	ret["idList"] = idList
+	ret["idMap"] = idMap
+
+	return ret
+}
