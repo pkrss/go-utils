@@ -16,6 +16,7 @@ func (c *OrderedMap) Init(limitCount int) {
 	if limitCount < 20 {
 		limitCount = 20
 	}
+	c.LimitCount = limitCount
 
 	if c.IDList == nil {
 		c.IDList = make([]string, 0, limitCount+1)
