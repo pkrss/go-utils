@@ -6,7 +6,7 @@ import "sync"
 type OrderedMap struct {
 	IDList     []string               `json:"idList"`
 	IDMap      map[string]interface{} `json:"idMap"`
-	LimitCount int                    `json:"LimitCount"`
+	LimitCount int                    `json:"limitCount"`
 	locker     *sync.RWMutex
 }
 
