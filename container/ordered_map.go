@@ -69,7 +69,7 @@ func (c *OrderedMap) Put(k string, v interface{}) bool {
 }
 
 // Info ...
-func (c *OrderedMap) Info(k string, v interface{}) map[string]interface{} {
+func (c *OrderedMap) Info() map[string]interface{} {
 
 	c.locker.RLock()
 	defer c.locker.RUnlock()
