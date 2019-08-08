@@ -45,15 +45,16 @@ func (c *OrderedMap) Get(k string) (v interface{}, ok bool) {
 	return v, ok
 }
 
-// Push ...
-func (c *OrderedMap) Push(k string, v interface{}) bool {
+// Put ...
+func (c *OrderedMap) Put(k string, v interface{}) bool {
 
 	c.locker.Lock()
 	defer c.locker.Unlock()
 
-	// if _, ok := c.idMap[k]; ok {
-	// 	return false
-	// }
+	if _, ok := c.idMap[k]; ok {
+		c.idMap[k] = v
+		return false
+	}
 	c.idMap[k] = v
 	c.IDList = append(c.IDList, k)
 
