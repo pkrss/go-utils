@@ -1,10 +1,13 @@
 package container
 
+import "sync"
+
 // OrderedMap ...
 type OrderedMap struct {
 	IDList     []string `json:"idList"`
 	idMap      map[string]interface{}
 	limitCount int
+	locker     *sync.RWMutex
 }
 
 // Init ...
@@ -23,22 +26,31 @@ func (c *OrderedMap) Init(limitCount int) {
 	for _, v := range c.IDList {
 		c.idMap[v] = 1
 	}
+	c.locker = &sync.RWMutex{}
 }
 
 // Exist ...
 func (c *OrderedMap) Exist(k string) bool {
+	c.locker.RLock()
+	defer c.locker.RUnlock()
 	_, ok := c.idMap[k]
 	return ok
 }
 
 // Get ...
 func (c *OrderedMap) Get(k string) (v interface{}, ok bool) {
+	c.locker.RLock()
+	defer c.locker.RUnlock()
 	v, ok = c.idMap[k]
 	return v, ok
 }
 
 // Push ...
 func (c *OrderedMap) Push(k string, v interface{}) bool {
+
+	c.locker.Lock()
+	defer c.locker.Unlock()
+
 	// if _, ok := c.idMap[k]; ok {
 	// 	return false
 	// }
