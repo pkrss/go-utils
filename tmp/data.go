@@ -32,11 +32,11 @@ func DataSet(key string, obj interface{}) {
 
 // DataGet ...
 func DataGet(key string) (obj interface{}, ok bool) {
-	dataMapLocker.Lock()
+	dataMapLocker.RLock()
 
 	obj, ok = dataMap[key]
 
-	dataMapLocker.Unlock()
+	dataMapLocker.RUnlock()
 
 	return
 }
