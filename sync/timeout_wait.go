@@ -12,10 +12,11 @@ type WaitForTimeOut struct {
 
 // WaitTimeOut ...
 func (l *WaitForTimeOut) WaitTimeOut(timeout time.Duration) {
-	if c.SleepMilliSeconds == 0 {
-		c.SleepMilliSeconds = 50
+	sleepMilliSeconds := l.SleepMilliSeconds
+	if sleepMilliSeconds == 0 {
+		sleepMilliSeconds = 50
 	}
-	s := c.SleepMilliSeconds * time.Millisecond
+	s := time.Duration(sleepMilliSeconds) * time.Millisecond
 	for l.ref = int32(timeout / s); l.ref > 0; l.ref-- {
 		time.Sleep(s)
 	}
