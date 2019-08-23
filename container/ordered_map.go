@@ -13,9 +13,6 @@ type OrderedMap struct {
 // Init ...
 func (c *OrderedMap) Init(limitCount int) {
 
-	if limitCount < 20 {
-		limitCount = 20
-	}
 	c.LimitCount = limitCount
 
 	if c.IDList == nil {
@@ -61,11 +58,13 @@ func (c *OrderedMap) Put(k string, v interface{}) bool {
 
 	c.IDList = append(c.IDList, k)
 
-	if cnt := len(c.IDList); cnt > c.LimitCount {
-		for i, l := 0, cnt-c.LimitCount; i < l; i++ {
-			delete(c.IDMap, c.IDList[i])
+	if c.LimitCount > 0 {
+		if cnt := len(c.IDList); cnt > c.LimitCount {
+			for i, l := 0, cnt-c.LimitCount; i < l; i++ {
+				delete(c.IDMap, c.IDList[i])
+			}
+			c.IDList = c.IDList[cnt-c.LimitCount:]
 		}
-		c.IDList = c.IDList[cnt-c.LimitCount:]
 	}
 
 	return true
