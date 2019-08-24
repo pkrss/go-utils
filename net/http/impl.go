@@ -30,21 +30,25 @@ const (
 	Patch
 	Delete
 	PutEmpty
+	GetJSON
 	PostJSON
+	PutJSON
+	PatchJSON
+	DeleteJSON
 )
 
 func method2String(method Method) string {
 	ret := ""
 	switch method {
-	case Get:
+	case Get, GetJSON:
 		ret = "GET"
 	case Post, PostJSON:
 		ret = "POST"
-	case Put, PutEmpty:
+	case Put, PutEmpty, PutJSON:
 		ret = "PUT"
-	case Patch:
+	case Patch, PatchJSON:
 		ret = "PATCH"
-	case Delete:
+	case Delete, DeleteJSON:
 		ret = "DELETE"
 	}
 	return ret
@@ -194,7 +198,7 @@ func (c *HttpClient) SendRequest(httpUrl string, params interface{}, method Meth
 				return
 			}
 		}
-	case PostJSON:
+	case GetJSON, PostJSON, PutJSON, PatchJSON, DeleteJSON:
 		h["Content-Type"] = "application/json"
 		if params != nil {
 			var content []byte
@@ -241,12 +245,6 @@ func (c *HttpClient) SendRequest(httpUrl string, params interface{}, method Meth
 		return
 	}
 
-	if res.StatusCode >= 400 {
-		e = fmt.Errorf("http error statusCode=%v", res.StatusCode)
-
-		res.Body.Close()
-	}
-
 	return
 }
 
@@ -268,6 +266,12 @@ func (c *HttpClient) FetchResult(httpUrl string, params interface{}, method Meth
 
 	if ret, e = readAll(res); e != nil {
 		return
+	}
+
+	if statusCode >= 400 {
+		e = fmt.Errorf("http error statusCode=%v", statusCode)
+
+		res.Body.Close()
 	}
 
 	return
@@ -375,8 +379,17 @@ func (h *HttpClient) DoRequestPostJsonWithRetHeader(httpUrl string, jsonData int
 }
 
 func (h *HttpClient) DoRequestJsonWithRetHeader2(httpUrl string, jsonData interface{}, header map[string]string, method Method) (ret []byte, statsCode int, rspHeader http.Header, e error) {
-	if method == Post {
+	switch method {
+	case Get:
+		method = GetJSON
+	case Post:
 		method = PostJSON
+	case Put:
+		method = PutJSON
+	case Patch:
+		method = PatchJSON
+	case Delete:
+		method = DeleteJSON
 	}
 	return h.FetchResult(httpUrl, jsonData, method, header)
 }
