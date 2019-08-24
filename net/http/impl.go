@@ -375,6 +375,9 @@ func (h *HttpClient) DoRequestPostJsonWithRetHeader(httpUrl string, jsonData int
 }
 
 func (h *HttpClient) DoRequestJsonWithRetHeader2(httpUrl string, jsonData interface{}, header map[string]string, method Method) (ret []byte, statsCode int, rspHeader http.Header, e error) {
+	if method == Post {
+		method = PostJSON
+	}
 	return h.FetchResult(httpUrl, jsonData, method, header)
 }
 
