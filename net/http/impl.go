@@ -271,7 +271,7 @@ func (c *HttpClient) FetchResult(httpUrl string, params interface{}, method Meth
 	if statusCode >= 400 {
 		e = fmt.Errorf("http error statusCode=%v", statusCode)
 
-		res.Body.Close()
+		// res.Body.Close()
 	}
 
 	return
