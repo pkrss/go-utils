@@ -37,9 +37,9 @@ const (
 	DeleteJSON
 )
 
-func method2String(method Method) string {
+func (c *Method) ToString() string {
 	ret := ""
-	switch method {
+	switch *c {
 	case Get, GetJSON:
 		ret = "GET"
 	case Post, PostJSON:
@@ -229,7 +229,7 @@ func (c *HttpClient) SendRequest(httpUrl string, params interface{}, method Meth
 		}
 	}
 
-	req, err := http.NewRequest(method2String(method), httpUrl, body)
+	req, err := http.NewRequest(method.ToString(), httpUrl, body)
 	if err != nil {
 		e = err
 		return
