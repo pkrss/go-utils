@@ -28,6 +28,9 @@ var timeLocation *time.Location
 var stdOut = false
 var logIgnoreStringList []string
 
+// TimeFmt ...
+var TimeFmt string = "2006-01-02 15:04:05.000"
+
 // Println ...
 func Println(p string) {
 	if logIgnoreStringList != nil {
@@ -51,7 +54,7 @@ func Println(p string) {
 			if timeLocation != nil {
 				t = t.In(timeLocation)
 			}
-			p2 := t.Format("2006-01-02 15:04:05 ") + p + logSplit
+			p2 := t.Format(TimeFmt) + p + logSplit
 			out.Write([]byte(p2))
 		}
 	}
