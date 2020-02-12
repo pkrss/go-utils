@@ -29,7 +29,7 @@ var stdOut = false
 var logIgnoreStringList []string
 
 // TimeFmt ...
-var TimeFmt string = "2006-01-02 15:04:05.000"
+var TimeFmt string = "2006-01-02 15:04:05.000 "
 
 // Println ...
 func Println(p string) {
