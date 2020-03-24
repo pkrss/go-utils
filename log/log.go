@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	pkFile "github.com/pkrss/go-utils/file"
@@ -93,25 +94,32 @@ func SetOut(o Writer) Writer {
 
 type LogWriter struct {
 	f *os.File
+	m sync.Mutex
 }
 
 func (l *LogWriter) Write(p []byte) (n int, err error) {
 	if l.f != nil {
+		l.m.Lock()
 		n, err = l.f.Write(p)
+		l.m.Unlock()
 	}
 	return
 }
 
 func (l *LogWriter) Clean() (err error) {
 	if l.f != nil {
+		l.m.Lock()
 		l.f.Truncate(0)
+		l.m.Unlock()
 	}
 	return
 }
 
 func (l *LogWriter) Close() {
 	if l.f != nil {
+		l.m.Lock()
 		l.f.Close()
+		l.m.Unlock()
 		l.f = nil
 	}
 	return
